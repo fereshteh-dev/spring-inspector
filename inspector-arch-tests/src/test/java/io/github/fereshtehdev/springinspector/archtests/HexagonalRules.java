@@ -6,35 +6,19 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
+import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import io.github.fereshtehdev.springinspector.core.port.Check;
 import org.jspecify.annotations.NullMarked;
 
 final class HexagonalRules {
 
-    private static final String[] FRAMEWORK_HTTP_LLM_AND_UI_PACKAGES = {
-        "org.springframework..",
-        "reactor..",
-        "jakarta.servlet..",
-        "java.net.http..",
-        "okhttp3..",
-        "org.apache.hc..",
-        "org.apache.http..",
-        "io.netty..",
-        "tools.jackson..",
-        "com.fasterxml.jackson..",
-        "picocli..",
-        "org.eclipse.jgit..",
-        "dev.langchain4j..",
-        "io.github.ollama4j..",
-        "org.thymeleaf..",
-        "org.jline..",
-        "java.awt..",
-        "javax.swing..",
-        "javafx.."
+    private static final String[] JDK_HTTP_AND_DESKTOP_UI_PACKAGES = {
+        "java.net.http..", "java.awt..", "javax.swing..", "java.applet.."
     };
 
     private static final String[] JACKSON_2_PACKAGES = {
@@ -47,14 +31,24 @@ final class HexagonalRules {
 
     private HexagonalRules() {}
 
-    static ArchRule coreIsFreeOfFrameworkHttpLlmAndUiLibraries(String root) {
+    static ArchRule coreDependsOnlyOnTheJdkAndJSpecify(String root) {
+        return classes()
+                .that()
+                .resideInAPackage(core(root))
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage("java..", "org.jspecify..", core(root))
+                .because("inspector-core is pure Java; libraries and frameworks belong in adapters");
+    }
+
+    static ArchRule coreUsesNoJdkHttpOrDesktopUi(String root) {
         return noClasses()
                 .that()
                 .resideInAPackage(core(root))
                 .should()
                 .dependOnClassesThat()
-                .resideInAnyPackage(FRAMEWORK_HTTP_LLM_AND_UI_PACKAGES)
-                .because("inspector-core is pure Java; frameworks belong in adapters");
+                .resideInAnyPackage(JDK_HTTP_AND_DESKTOP_UI_PACKAGES)
+                .because("HTTP and UI are adapter concerns");
     }
 
     static ArchRule coreDependsOnNoAdapter(String root) {
@@ -70,6 +64,16 @@ final class HexagonalRules {
         return slices().matching(root + ".rules.(*)..")
                 .should()
                 .notDependOnEachOther()
+                .because("checks are plugins and never call each other");
+    }
+
+    static ArchRule checksDoNotCallEachOther(String root) {
+        return classes()
+                .that()
+                .resideInAPackage(root + "..")
+                .and()
+                .implement(Check.class)
+                .should(dependOnNoOtherCheck())
                 .because("checks are plugins and never call each other");
     }
 
@@ -89,6 +93,20 @@ final class HexagonalRules {
 
     private static String core(String root) {
         return root + ".core..";
+    }
+
+    private static ArchCondition<JavaClass> dependOnNoOtherCheck() {
+        return new ArchCondition<>("depend on no other check") {
+            @Override
+            public void check(JavaClass check, ConditionEvents events) {
+                for (Dependency dependency : check.getDirectDependenciesFromSelf()) {
+                    JavaClass target = dependency.getTargetClass();
+                    if (!target.equals(check) && !target.isInterface() && target.isAssignableTo(Check.class)) {
+                        events.add(SimpleConditionEvent.violated(check, dependency.getDescription()));
+                    }
+                }
+            }
+        };
     }
 
     private static ArchCondition<JavaClass> resideInANullMarkedPackage() {

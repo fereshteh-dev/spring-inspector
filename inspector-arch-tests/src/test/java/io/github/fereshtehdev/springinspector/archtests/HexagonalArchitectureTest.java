@@ -1,8 +1,9 @@
 package io.github.fereshtehdev.springinspector.archtests;
 
 import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.checkModulesAreIndependent;
+import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.checksDoNotCallEachOther;
 import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.coreDependsOnNoAdapter;
-import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.coreIsFreeOfFrameworkHttpLlmAndUiLibraries;
+import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.coreUsesNoJdkHttpOrDesktopUi;
 import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.everyPackageIsNullMarked;
 import static io.github.fereshtehdev.springinspector.archtests.HexagonalRules.nothingUsesJackson2;
 
@@ -20,8 +21,13 @@ class HexagonalArchitectureTest {
             .importPackages(ROOT);
 
     @Test
-    void coreDoesNotDependOnFrameworkHttpLlmOrUiLibraries() {
-        coreIsFreeOfFrameworkHttpLlmAndUiLibraries(ROOT).check(PRODUCTION_CLASSES);
+    void coreDependsOnlyOnTheJdkAndJSpecify() {
+        HexagonalRules.coreDependsOnlyOnTheJdkAndJSpecify(ROOT).check(PRODUCTION_CLASSES);
+    }
+
+    @Test
+    void coreDoesNotUseJdkHttpOrDesktopUiApis() {
+        coreUsesNoJdkHttpOrDesktopUi(ROOT).check(PRODUCTION_CLASSES);
     }
 
     @Test
@@ -32,6 +38,11 @@ class HexagonalArchitectureTest {
     @Test
     void checkModulesDoNotDependOnEachOther() {
         checkModulesAreIndependent(ROOT).check(PRODUCTION_CLASSES);
+    }
+
+    @Test
+    void checksDoNotCallOtherChecks() {
+        checksDoNotCallEachOther(ROOT).allowEmptyShould(true).check(PRODUCTION_CLASSES);
     }
 
     @Test

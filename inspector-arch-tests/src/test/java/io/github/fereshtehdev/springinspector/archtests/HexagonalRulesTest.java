@@ -14,9 +14,17 @@ class HexagonalRulesTest {
     private static final JavaClasses LEAKY_CLASSES = new ClassFileImporter().importPackages(LEAKY_ROOT);
 
     @Test
-    void rejectsCoreClassUsingAnHttpClient() {
-        assertThatThrownBy(() -> HexagonalRules.coreIsFreeOfFrameworkHttpLlmAndUiLibraries(LEAKY_ROOT)
+    void rejectsCoreClassUsingAThirdPartyLibrary() {
+        assertThatThrownBy(() -> HexagonalRules.coreDependsOnlyOnTheJdkAndJSpecify(LEAKY_ROOT)
                         .check(LEAKY_CLASSES))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("ThirdPartyCore");
+    }
+
+    @Test
+    void rejectsCoreClassUsingTheJdkHttpClient() {
+        assertThatThrownBy(() ->
+                        HexagonalRules.coreUsesNoJdkHttpOrDesktopUi(LEAKY_ROOT).check(LEAKY_CLASSES))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("HttpCallingCore");
     }
@@ -35,6 +43,14 @@ class HexagonalRulesTest {
                         HexagonalRules.checkModulesAreIndependent(LEAKY_ROOT).check(LEAKY_CLASSES))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("SecurityCheck");
+    }
+
+    @Test
+    void rejectsCheckCallingAnotherCheckInTheSameModule() {
+        assertThatThrownBy(() ->
+                        HexagonalRules.checksDoNotCallEachOther(LEAKY_ROOT).check(LEAKY_CLASSES))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("DelegatingCheck");
     }
 
     @Test

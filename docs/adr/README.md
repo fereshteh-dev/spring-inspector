@@ -5,4 +5,4 @@ a later ADR supersedes an earlier one instead.
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| 0001 | Semantic model: OpenRewrite vs JavaParser | Pending (Phase 1) |
+| [0001](0001-semantic-model-javaparser.md) | JavaParser with symbol solver for the semantic model | Accepted |
