@@ -24,6 +24,7 @@
     <modules>
         <module>inspector-core</module>
         <module>inspector-java-model</module>
+        <module>inspector-project</module>
         <module>inspector-rules-security</module>
         <module>inspector-rules-spring</module>
         <module>inspector-rules-springai</module>
@@ -48,6 +49,7 @@
         <archunit.version>1.5.1</archunit.version>
         <error-prone.version>2.50.0</error-prone.version>
         <nullaway.version>0.14.2</nullaway.version>
+        <jgit.version>7.8.0.202609011348-r</jgit.version>
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
 
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -84,6 +86,11 @@
                 <version>${archunit.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>inspector-core</artifactId>
                 <version>${project.version}</version>
@@ -91,6 +98,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>inspector-java-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>inspector-project</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

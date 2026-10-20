@@ -38,6 +38,11 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>inspector-project</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>inspector-rules-security</artifactId>
             <scope>test</scope>
         </dependency>

@@ -1,0 +1,2 @@
+rootProject.name = "assistant"
+include(":api", ":services:billing")

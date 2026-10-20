@@ -1,0 +1,2 @@
+springBootVersion=3.3.5
+org.gradle.caching=true

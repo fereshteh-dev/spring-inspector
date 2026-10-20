@@ -25,6 +25,10 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>inspector-project</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>inspector-rules-security</artifactId>
         </dependency>
         <dependency>

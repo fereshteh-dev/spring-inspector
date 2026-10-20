@@ -1,0 +1,10 @@
+[versions]
+spring-boot = "4.0.2" # current Boot line
+spring-ai = "2.0.0"
+
+[libraries]
+spring-ai-bom = { module = "org.springframework.ai:spring-ai-bom", version.ref = "spring-ai" }
+assertj = "org.assertj:assertj-core:3.27.7"
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
