@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      spring:
+        patterns:
+          - "org.springframework*"
+    ignore:
+      # Stay on Boot 4.1.x / Spring AI 2.0.x; minor upgrades are a deliberate decision.
+      - dependency-name: "org.springframework.boot:*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "org.springframework.ai:*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
