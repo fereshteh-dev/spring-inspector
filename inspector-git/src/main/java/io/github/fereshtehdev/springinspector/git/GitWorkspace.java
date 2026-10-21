@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.ObjectId;
@@ -47,6 +48,12 @@ public final class GitWorkspace implements ChangeCollector, AutoCloseable {
     public static GitWorkspace open(Path projectRoot, Map<String, String> environment) {
         Repositories.OpenedRepository opened = Repositories.open(projectRoot, environment);
         return new GitWorkspace(opened.repository(), opened.prefix(), projectRoot);
+    }
+
+    /** The workspace of the repository containing the project, or empty when the project is not under git. */
+    public static Optional<GitWorkspace> find(Path projectRoot, Map<String, String> environment) {
+        return Repositories.find(projectRoot, environment)
+                .map(opened -> new GitWorkspace(opened.repository(), opened.prefix(), projectRoot));
     }
 
     @Override

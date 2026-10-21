@@ -1,6 +1,9 @@
 # Contributing
 
-> Placeholder: the full guide, including how to add a new rule, arrives in Phase 11.
+Thank you for helping. Bug reports with a small code sample, ideas for rules and pull requests are all welcome.
+
+A step-by-step guide to adding a rule is coming; until then, copy a rule from `inspector-rules-*` and its test,
+which uses the rule test kit in `inspector-rule-testkit`.
 
 ## Before you open a pull request
 

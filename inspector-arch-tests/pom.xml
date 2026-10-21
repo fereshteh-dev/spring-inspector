@@ -88,11 +88,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>inspector-ui</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>inspector-eval</artifactId>
             <scope>test</scope>
         </dependency>

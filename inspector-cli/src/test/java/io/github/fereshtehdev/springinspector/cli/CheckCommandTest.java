@@ -8,6 +8,8 @@ import io.github.fereshtehdev.springinspector.advisories.AdvisorySeverity;
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryStore;
 import io.github.fereshtehdev.springinspector.advisories.AffectedRange;
 import io.github.fereshtehdev.springinspector.cli.CliRun.Result;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -191,6 +193,18 @@ class CheckCommandTest {
 
         assertThat(result.exitCode()).isEqualTo(ExitCodes.USAGE);
         assertThat(result.err()).contains("Not inside a git repository");
+    }
+
+    @Test
+    void inspectsAWholeProjectOutsideGit() throws IOException {
+        Path plain = temp.resolve("home").resolve("plain");
+        Files.createDirectories(plain.resolve("src/main/java/com/acme"));
+        Files.writeString(plain.resolve(INJECTABLE), INJECTABLE_SOURCE);
+
+        Result result = cli.run("check", "--all", "--project", plain.toString());
+
+        assertThat(result.exitCode()).isEqualTo(ExitCodes.BLOCKED);
+        assertThat(result.out()).contains("BLOCKER src/main/java/com/acme/Orders.java:9");
     }
 
     @Test

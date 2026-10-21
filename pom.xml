@@ -35,7 +35,6 @@
         <module>inspector-llm</module>
         <module>inspector-git</module>
         <module>inspector-cli</module>
-        <module>inspector-ui</module>
         <module>inspector-eval</module>
         <module>inspector-arch-tests</module>
     </modules>
@@ -173,11 +172,6 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>inspector-cli</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>inspector-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

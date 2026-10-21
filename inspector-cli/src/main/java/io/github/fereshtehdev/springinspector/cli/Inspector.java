@@ -13,6 +13,7 @@ import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.core.port.CollectedChanges;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
 import io.github.fereshtehdev.springinspector.core.port.ProjectDetector;
+import io.github.fereshtehdev.springinspector.git.FolderFiles;
 import io.github.fereshtehdev.springinspector.git.GitWorkspace;
 import io.github.fereshtehdev.springinspector.javamodel.JavaModel;
 import io.github.fereshtehdev.springinspector.javamodel.cache.CacheSecret;
@@ -71,9 +72,7 @@ final class Inspector {
             Future<FindingCache> loadingCache = setup.submit(() -> useCache
                     ? FindingCache.open(projectRoot, CacheSecret.loadOrCreate(home.cacheKey()))
                     : FindingCache.disabled());
-            try (GitWorkspace workspace = GitWorkspace.open(projectRoot, environment)) {
-                changes = workspace.collect(scope);
-            }
+            changes = collect(projectRoot, scope);
             detected = join(detecting);
             cache = join(loadingCache);
             loaded = join(configuring);
@@ -95,6 +94,21 @@ final class Inspector {
                 model.unparseableFiles(),
                 loaded.file(),
                 warnings);
+    }
+
+    /** Changes from git; a project outside git can still be inspected as a whole. */
+    private CollectedChanges collect(Path projectRoot, ChangeScope scope) {
+        Optional<GitWorkspace> git = GitWorkspace.find(projectRoot, environment);
+        if (git.isEmpty()) {
+            if (scope instanceof ChangeScope.All) {
+                return FolderFiles.all(projectRoot);
+            }
+            throw new IllegalArgumentException(
+                    "Not inside a git repository: " + projectRoot + "; use --all to inspect every file");
+        }
+        try (GitWorkspace workspace = git.get()) {
+            return workspace.collect(scope);
+        }
     }
 
     private boolean checksDependencies(InspectorConfig config) {

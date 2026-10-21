@@ -1,0 +1,49 @@
+name: Release
+
+# Pushing a tag such as v0.1.0 builds and tests everything with that version and publishes a GitHub release with the
+# IntelliJ plugin zip and the command-line jar.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Take the version from the tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      # versions-maven-plugin (Apache-2.0) stamps the release version into every module, so the jar reports it.
+      - name: Set the version
+        run: ./mvnw -B -ntp org.codehaus.mojo:versions-maven-plugin:2.22.0:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+
+      - name: Build and test the command line
+        run: ./mvnw -B -ntp verify
+
+      - name: Build, test and check the IntelliJ plugin
+        working-directory: inspector-intellij
+        run: ./gradlew --no-daemon -PpluginVersion="$VERSION" test buildPlugin verifyPluginStructure
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir dist
+          cp inspector-cli/target/spring-inspector.jar "dist/spring-inspector-$VERSION.jar"
+          cp inspector-intellij/build/distributions/*.zip "dist/spring-inspector-intellij-$VERSION.zip"
+          (cd dist && sha256sum * > SHA256SUMS)
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Spring Inspector $VERSION" \
+            --notes "Install the IntelliJ plugin from **spring-inspector-intellij-$VERSION.zip** (Settings | Plugins | ⚙ | Install Plugin from Disk), or run **spring-inspector-$VERSION.jar** with Java 25. See [CHANGELOG.md](CHANGELOG.md) and the [installation guide](docs/user-guide.md)." \
+            --generate-notes

@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
@@ -18,13 +19,19 @@ final class Repositories {
     private Repositories() {}
 
     static OpenedRepository open(Path projectRoot, Map<String, String> environment) {
+        return find(projectRoot, environment)
+                .orElseThrow(() -> new IllegalArgumentException("Not inside a git repository: " + projectRoot));
+    }
+
+    /** The repository containing the project, or empty when the project is not inside one. */
+    static Optional<OpenedRepository> find(Path projectRoot, Map<String, String> environment) {
         Path root = realPath(projectRoot);
         try {
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             ceilings(environment).forEach(builder::addCeilingDirectory);
             builder.findGitDir(root.toFile());
             if (builder.getGitDir() == null) {
-                throw new IllegalArgumentException("Not inside a git repository: " + projectRoot);
+                return Optional.empty();
             }
             builder.setMustExist(true).setup();
             if (builder.getWorkTree() == null) {
@@ -36,7 +43,7 @@ final class Repositories {
                 builder.setIndexFile(workTree.resolve(indexFile).toFile());
             }
             Repository repository = builder.build();
-            return new OpenedRepository(repository, ProjectPrefix.of(workTree.relativize(root)));
+            return Optional.of(new OpenedRepository(repository, ProjectPrefix.of(workTree.relativize(root))));
         } catch (IOException e) {
             throw new UncheckedIOException("Could not open the git repository for " + projectRoot, e);
         }

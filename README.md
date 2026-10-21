@@ -1,96 +1,133 @@
 # Spring Inspector
 
-Offline-first code inspector for Java, Spring Boot and Spring AI projects.
+[![CI](https://github.com/fereshteh-dev/spring-inspector/actions/workflows/ci.yml/badge.svg)](https://github.com/fereshteh-dev/spring-inspector/actions/workflows/ci.yml)
+[![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status:** early development. The command line works with 51 rules across security, Spring Boot, Spring AI,
-> clean code and migration, offline checks for vulnerable dependencies, and per-project settings, from the command
-> line or from an IntelliJ plugin.
+**A private code reviewer for Java, Spring Boot and Spring AI that runs on your machine.**
 
-Run it before every commit and get a report card covering security, Spring Boot rules,
-Spring AI rules, clean code and architecture. Every finding says what's wrong, why it
-matters and how to fix it, with a patch you can apply. Your code never leaves your machine.
+Spring Inspector reviews your code for security problems, Spring Boot and Spring AI mistakes, clean-code issues,
+outdated APIs and vulnerable dependencies, and gives you a report card. Every finding tells you **what is wrong**,
+**why it matters** and **how to fix it**, often with a ready patch. It works inside IntelliJ IDEA, on the command
+line and as a git pre-commit hook.
 
-## Building
+- **Spring-aware:** it understands `@Transactional`, Spring Security, actuator, Spring AI prompts and tools, and your
+  Java, Spring Boot and Spring AI versions. Generic linters do not.
+- **Private:** your code never leaves your machine. There is no server, no account and no cloud.
+- **Fast:** a typical commit is checked in a few seconds; unchanged files are not inspected again.
 
-Requires JDK 25 or newer.
+```
+Spring Inspector  score 60/100
 
-```shell
-./mvnw verify
+  [FAIL] Security     2 blocker, 1 info
+      BLOCKER pom.xml:21  log4j-core 2.14.1 has 7 known vulnerabilities (2 critical, 1 high, 4 moderate)
+      BLOCKER src/main/java/com/acme/Orders.java:9  SQL built from runtime values is passed to executeQuery()
+  [ OK ] Spring Boot  no findings
+  [HINT] Clean code   1 minor
+  [ OK ] Migration    no findings
+  Vulnerability advisories from 2026-10-21
 ```
 
-This builds `inspector-cli/target/spring-inspector.jar`.
+## Install
 
-## Using it
+Download the latest release from
+**[GitHub Releases](https://github.com/fereshteh-dev/spring-inspector/releases/latest)**:
 
-Run it from your project directory, inside a git repository:
+| File | What it is |
+|------|------------|
+| `spring-inspector-intellij-<version>.zip` | The IntelliJ plugin |
+| `spring-inspector-<version>.jar` | The command line and git hook |
+| `SHA256SUMS` | Checksums to verify the downloads |
+
+### IntelliJ IDEA plugin
+
+Works in IntelliJ IDEA (Community and Ultimate) and the other JetBrains IDEs, version 2025.1 or newer.
+
+1. Download `spring-inspector-intellij-<version>.zip`. Do not unzip it.
+2. In IntelliJ, open **Settings → Plugins**, click **⚙ → Install Plugin from Disk…**, choose the zip and restart the
+   IDE.
+3. Open the **Spring Inspector** tool window at the bottom, or use **Tools → Inspect Project with Spring Inspector**.
+4. Click **Inspect Whole project** (or **Inspect Staged changes**). Select a finding to read the explanation and
+   the fix; double-click it to jump to the code.
+
+The inspector itself needs **Java 25 or newer**. IntelliJ IDEA 2026.2 already runs on Java 25, so there is nothing to
+set up. With an older IDE, install a JDK 25 and choose it in **Settings → Tools → Spring Inspector**.
+
+### Command line and git hook
+
+Needs Java 25 or newer (`java -version`).
 
 ```shell
-java -jar spring-inspector.jar check                       # staged changes (the default)
-java -jar spring-inspector.jar check --base main           # everything since you branched off main
-java -jar spring-inspector.jar check --all                 # the whole project
-java -jar spring-inspector.jar check --details security    # why it matters and how to fix it
-java -jar spring-inspector.jar check --format sarif        # also: json
-java -jar spring-inspector.jar install-hook                # check every commit; skip once with --no-verify
-java -jar spring-inspector.jar update                      # download vulnerability advisories for offline use
+java -jar spring-inspector.jar check --all                   # review the whole project
+java -jar spring-inspector.jar check                         # review only your staged changes
+java -jar spring-inspector.jar check --base main             # review everything since you branched off main
+java -jar spring-inspector.jar check --details security      # explain every finding of one category
+java -jar spring-inspector.jar install-hook                  # review every commit automatically
+java -jar spring-inspector.jar update                        # download vulnerability advisories (do this weekly)
 ```
 
-`update` downloads OSV's Maven advisories (which include the GitHub and Spring advisories) to
-`~/.spring-inspector/advisories`; later runs download only when they changed. It honours `HTTPS_PROXY`. The advisory
-data is published by OSV.dev and the GitHub Advisory Database (CC-BY 4.0) and is not part of this distribution.
+The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and troubleshooting.
 
-When a build file is part of the change (always with `--all`), `check` matches the project's libraries against these
-advisories: versions written in `pom.xml` or Gradle scripts, versions managed by parents and BOMs already in your local
-Maven or Gradle cache, and the libraries inside an application jar or war you have built in `target/` or `build/libs`.
-Nothing is downloaded and the build is never run. Every report shows the advisories' date and warns when they are
-more than 7 days old.
+## What it checks
 
-## Configuration
+51 rules in five categories. See the [rule catalogue](docs/rules/README.md) for all of them.
 
-Settings live in `spring-inspector.yml` at the project root; `java -jar spring-inspector.jar init` writes a commented
-one with the defaults. You can turn rules and categories off, change severities and the gate, set rule options such
-as `cleancode.long-method: { max-lines: 80 }`, and ignore paths such as `**/generated/**`. Unknown settings are
-warnings; invalid values stop the run with the name of the setting. In CI, `check --config <file>` uses a file of
-your choice instead of the one in the repository.
+| Category | Examples |
+|----------|----------|
+| **Security** (16) | SQL injection, hard-coded secrets, weak cryptography, `permitAll()` on admin paths, CSRF off, exposed actuator, XXE, SSRF, path traversal, unsafe deserialization, vulnerable dependencies |
+| **Spring Boot** (14) | field injection, `@Transactional` that never starts a transaction, entities in controllers, missing `@Valid`, N+1 queries, blocking calls in reactive code, virtual-thread pinning |
+| **Spring AI** (5) | user input in system prompts, one chat memory for all users, destructive tools without confirmation, model output used in SQL or shell commands |
+| **Clean code** (12) | long methods, deep nesting, swallowed exceptions, returning `null`, `Optional` misuse, data classes that should be records |
+| **Migration** (4) | Spring Boot lines out of support, `javax` → `jakarta`, removed Spring Security and Spring AI APIs |
 
-To silence one finding, write this on its line or the line above. The reason is required, and suppressed findings
-still appear in the report (and as suppressed results in SARIF), so reviews can audit them:
+### Vulnerable dependencies
+
+Run `update` once (and then weekly) to download the public vulnerability advisories from [OSV.dev](https://osv.dev),
+which include the GitHub and Spring advisories. After that, checks work offline. Spring Inspector reads your
+dependencies without running your build: from `pom.xml` and Gradle files, from parents and BOMs such as Spring Boot's,
+and from an application jar you have already built. Every report says how old the advisories are.
+
+## Configure
+
+Run `java -jar spring-inspector.jar init` to create a commented `spring-inspector.yml` in your project. In it you can
+turn rules and categories off, change severities and when a commit is blocked, set limits such as the maximum method
+length, and ignore generated code. To accept one finding, add a comment with a reason:
 
 ```java
 // inspector:ignore security.sql-concatenation reason="column name comes from an enum"
 ```
 
-`check` exits with 1 when the gate blocks (a BLOCKER finding by default), 2 for a usage error and 3 if the tool
-itself fails. Results are cached per file in `.spring-inspector/cache`, signed with a key in `~/.spring-inspector`,
-so unchanged files are not inspected again.
+## Privacy
 
-## IntelliJ plugin
+Spring Inspector never sends your code anywhere and never runs it. The only network access is `update`, which
+downloads public advisory data; nothing about your project is sent.
 
-The plugin shows the same report card inside IntelliJ IDEA and the other JetBrains IDEs (2025.1 or newer).
+## Build from source
 
-Build it after the command line, from the repository root:
+Needs JDK 25.
 
 ```shell
-./mvnw package
+./mvnw verify                      # builds and tests the command line: inspector-cli/target/spring-inspector.jar
 cd inspector-intellij
-./gradlew buildPlugin        # add -PlocalIde=<path to an installed IDE> to compile against it instead of downloading one
+./gradlew buildPlugin              # builds the plugin: build/distributions/spring-inspector-intellij-<version>.zip
 ```
 
-Install `inspector-intellij/build/distributions/spring-inspector-intellij-<version>.zip` with
-*Settings | Plugins | ⚙ | Install Plugin from Disk…*, then open the **Spring Inspector** tool window (or
-*Tools | Inspect Project with Spring Inspector*) and run it on the whole project or on your staged changes.
-Double-click a finding to open it in the editor.
+To compile the plugin against an IntelliJ you have installed instead of downloading one, add
+`-PlocalIde="<path to the IDE>"`.
 
-The inspector needs Java 25 or newer. IntelliJ IDEA 2026.2 already runs on it; for older IDEs, choose a Java 25
-installation in *Settings | Tools | Spring Inspector*.
+## Status and roadmap
+
+Spring Inspector is young: version 0.1 is the first public release. Next come editor highlighting and one-click
+fixes in IntelliJ, the JetBrains Marketplace, architecture rules, and published accuracy numbers. See the
+[specification](docs/SPEC.md) (section 16) and the [changelog](CHANGELOG.md).
 
 ## Documentation
 
-- [Specification](docs/SPEC.md)
-- [Architecture decision records](docs/adr/README.md)
+- [User guide](docs/user-guide.md): installation, commands, configuration, CI, troubleshooting
 - [Rule catalogue](docs/rules/README.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
+- [Specification](docs/SPEC.md) and [architecture decisions](docs/adr/README.md)
+- [Contributing](CONTRIBUTING.md) and [security policy](SECURITY.md)
 
 ## Licence
 
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](LICENSE). Vulnerability data comes from OSV.dev and the GitHub Advisory Database (CC-BY 4.0) and
+is downloaded by each user; it is not part of this distribution.

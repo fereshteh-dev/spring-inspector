@@ -10,7 +10,8 @@ plugins {
 }
 
 group = "io.github.fereshtehdev"
-version = "0.1.0-SNAPSHOT"
+// Releases pass the tag's version with -PpluginVersion.
+version = providers.gradleProperty("pluginVersion").getOrElse("0.1.0-SNAPSHOT")
 
 // The plugin runs inside the IDE's own Java, which is Java 21 for the 2025.x IDEs (ADR-0004).
 tasks.withType<JavaCompile>().configureEach {

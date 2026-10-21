@@ -1,6 +1,6 @@
 1. Product
    Problem. Developers now write a lot of code with AI agents. Generic linters do not understand Spring Boot or Spring AI, SonarQube needs a server, and cloud AI reviewers send code outside the company. Seniors need a fast, private, Spring-aware gate before every commit.
-   Promise. Run spring-inspector check (or just git commit) and within seconds get a report card:
+   Promise. Install the IntelliJ plugin from GitHub (or run spring-inspector check, or just git commit) and within seconds get a report card:
    Category
    Result
    Security
@@ -23,10 +23,10 @@
    • Spring Boot 3.3–3.5 and 4.0–4.x; Spring AI 1.0–1.1 and 2.0.x. Detect versions from Maven/Gradle files (parse the BOM/parent; never execute the build).
    • A rule declares the version ranges it applies to; the engine skips rules that don't apply. Migration hints (e.g. Boot 3.5 is out of OSS support; Jackson 2 → 3) are a separate INFO-level category.
 3. Delivery modes (build order)
-1. CLI — spring-inspector check [--staged | --base main | --all] [--format terminal|json|sarif|html].
+1. CLI — spring-inspector check [--staged | --base main | --all] [--format terminal|json|sarif]; also init, update and install-hook.
 2. Git pre-commit hook — spring-inspector install-hook; checks staged changes; blocks the commit only on BLOCKER findings (configurable); --no-verify still works.
-3. Local web report — spring-inspector ui starts a localhost-only Spring Boot app showing the report card, issue details, diff preview and apply-fix button.
-4. IntelliJ plugin (later phase) — tool window with the same report card, gutter icons, quick-fixes. Talks to the same core.
+3. IntelliJ plugin — the main way developers use it. Installs from a zip published on GitHub Releases into IntelliJ IDEA and the other JetBrains IDEs (2025.1+). Tool window with the same report card, findings tree, details with the three parts, open-in-editor; then editor highlighting, quick-fixes that apply the patch, and a check before commit. It runs the bundled CLI in its own process and reads its JSON report (ADR-0004).
+   Dropped: the local web report (spring-inspector ui). The IDE plugin replaces it.
 4. Modules (Maven multi-module)
    • inspector-core — domain + ports + engine. Pure Java.
    • inspector-java-model — parses source into a semantic model (OpenRewrite LST or JavaParser with symbol solver; decide in Phase 1 and record an ADR).
@@ -34,9 +34,8 @@
    • inspector-advisories — offline vulnerability/advisory database and sync.
    • inspector-llm — optional local AI explainer via Spring AI 2.0 + Ollama.
    • inspector-git — JGit: staged/base diffs, hook installer.
-   • inspector-cli — picocli entry point, terminal renderer.
-   • inspector-ui — localhost web report.
-   • inspector-intellij — later.
+   • inspector-cli — picocli entry point, terminal, JSON and SARIF renderers; the executable jar.
+   • inspector-intellij — the IntelliJ plugin; a separate Gradle build that bundles the CLI jar (ADR-0004).
    • inspector-eval — benchmark harness.
 5. Domain model (inspector-core)
    • ProjectContext — root path, detected Java/Boot/Spring AI versions, build tool, modules, config.
@@ -64,7 +63,7 @@
    • Unsafe deserialization, XXE-prone parsers, path traversal in file handling, SSRF via RestClient/WebClient with user-controlled URLs.
    • Weak crypto and randomness (MD5/SHA-1 for passwords, Random for tokens).
    • Mass assignment: binding request bodies directly into JPA entities.
-   • Vulnerable dependencies from the advisory database, with reachability hint when the vulnerable API is used.
+   • Vulnerable dependencies from the advisory database, on the line that declares them, with the lowest version that fixes every advisory. (A reachability hint is deferred: OSV's Maven data does not say which API is vulnerable.)
    Spring Boot
    • Field injection; @Autowired on constructors needlessly.
    • @Transactional self-invocation, on private methods, or on non-public/final classes; read-only missing on query methods.
@@ -92,8 +91,9 @@
    • Violations: forbidden layer dependencies, cycles between packages/modules, controllers calling repositories directly, domain depending on frameworks, new cross-module dependencies.
    • Architecture diff: for each run, compare the dependency graph before and after the change and report new edges, removed edges and new cycles, with a small rendered diagram in the web UI.
 8. Security advisories ("always current")
-   • Local SQLite (or H2 file) database in ~/.spring-inspector/advisories.
-   • spring-inspector update pulls from public sources when online: OSV.dev (Maven ecosystem), GitHub Security Advisories, and the Spring security advisories page. Sync is incremental, signed/checksummed where the source allows, and works behind a proxy.
+   • One compact, checksummed file in ~/.spring-inspector/advisories, loaded in milliseconds (ADR-0003; replaces the SQLite/H2 idea).
+   • spring-inspector update downloads OSV.dev's Maven archive, which already includes GitHub Security Advisories and the Spring advisories. It downloads only when the archive changed (ETag), verifies the published checksum, and works behind a proxy.
+   • Dependencies are found without running the build: build files, parents and BOMs from the local Maven/Gradle cache, and libraries inside an already built Spring Boot jar or war.
    • Every report shows the advisory database date and warns if it is older than 7 days.
    • Fully offline after sync; no code ever leaves the machine.
 9. Local AI (optional, off by default)
@@ -107,8 +107,8 @@
     • spring-inspector roast — humorous summary of the worst issue; never insulting, never about the person.
 11. UI
     • Terminal: colourful report card with emoji status, collapsible detail via --details <category>.
-    • Web (localhost only, random port, token in URL): report card dashboard, category drill-down, issue page with the three parts side by side, syntax-highlighted diff, "apply fix" button, architecture diff diagram, history of past runs. Keep it simple: server-rendered (Thymeleaf + htmx) unless there is a strong reason otherwise.
-    • Accessible, works in dark mode.
+    • IntelliJ: tool window with the report card, category tree, the three parts side by side with the patch, open-in-editor; editor highlighting and quick-fixes; uses the IDE's theme, so dark mode and accessibility come from the platform.
+    • The architecture diff appears in the report as findings and, later, as a diagram in the tool window.
 12. Configuration (spring-inspector.yml in the inspected repo)
     • Enabled categories and rules, severities, thresholds, gate policy, architecture definition, ignored paths, AI on/off and model, tone.
     • Inline suppression: // inspector:ignore <ruleId> reason="..." — reason required.
@@ -116,12 +116,17 @@
     • Tech: Java 25 LTS, Spring Boot 4.1.x, Spring AI 2.0.x, picocli, JGit, OpenRewrite or JavaParser, JUnit (latest supported by Boot 4.1), AssertJ, Mockito, ArchUnit.
     • Build: Maven wrapper, Spotless (palantir-java-format), Error Prone + NullAway, JaCoCo (≥ 80% on core and rules), CycloneDX SBOM, Dependabot.
     • Every rule: description, bad example, good example, tests, docs page generated from the rule metadata.
-    • Distribution: executable jar, native image via GraalVM (later), Homebrew/SDKMAN/Scoop (later), Docker image for CI.
+    • Distribution: every release on GitHub Releases carries the IntelliJ plugin zip and the executable CLI jar; the JetBrains Marketplace once the plugin is verified against the IDEs it supports; native image, Homebrew/SDKMAN/Scoop and a Docker image for CI later.
     • Outputs SARIF so it also works in GitHub code scanning.
 14. Evaluation harness (inspector-eval)
     • At least 60 fixture projects/snippets across Java 21 and 25 and Boot 3.5 / 4.1: labelled vulnerable, labelled clean.
     • Reports precision, recall and false-positive rate per category and per rule into eval-report.md; CI fails if precision drops below the configured threshold.
     • This is the project's differentiator — publish the numbers in the README.
 15. Open-source readiness
-    • Apache-2.0 licence, README (problem, GIF demo, quick start, report-card screenshot, rule list, comparison with SonarQube/PMD/Semgrep, eval numbers), CONTRIBUTING (how to add a rule in under 30 minutes), SECURITY.md, CODE_OF_CONDUCT, CHANGELOG, semantic versioning, GitHub Actions for CI and releases, issue/PR templates, docs/adr/ with architecture decision records.
+    • Apache-2.0 licence, README (problem, GIF demo, install from GitHub Releases, quick start, report-card screenshot, rule list, comparison with SonarQube/PMD/Semgrep, eval numbers), user guide, CONTRIBUTING (how to add a rule in under 30 minutes), SECURITY.md, CODE_OF_CONDUCT, CHANGELOG, semantic versioning, GitHub Actions for CI and releases (a version tag builds, tests and publishes the plugin zip and CLI jar), issue/PR templates, docs/adr/ with architecture decision records.
     • Clean plugin API for third-party rule packs — this is what makes it acquisition-worthy for an IDE vendor.
+16. Roadmap after the first release
+    • v0.1 (first public release): CLI, git hook, 51 rules, vulnerable dependencies, IntelliJ tool window.
+    • v0.2: IntelliJ editor highlighting, quick-fixes, check before commit; Plugin Verifier; JetBrains Marketplace.
+    • v0.3: architecture rules and architecture diff; evaluation harness with published precision/recall.
+    • Later: optional local AI explanations (section 9), the fun part (section 10), Kotlin, more distribution channels.
