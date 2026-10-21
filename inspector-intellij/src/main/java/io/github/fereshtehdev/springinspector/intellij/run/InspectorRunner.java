@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 /** Runs the bundled command line on the project in a separate process and reads its report. */
@@ -24,7 +25,7 @@ public final class InspectorRunner {
 
     private InspectorRunner() {}
 
-    public static RunOutcome run(Path project, InspectionScope scope, ProgressIndicator indicator) {
+    public static RunOutcome run(Path project, InspectionScope scope, List<Path> files, ProgressIndicator indicator) {
         Optional<Path> java = JavaRuntimes.find(
                 InspectorSettings.getInstance().javaPath(),
                 Path.of(System.getProperty("java.home")),
@@ -40,7 +41,7 @@ public final class InspectorRunner {
             return new RunOutcome.Failed("The plugin is incomplete: cli/spring-inspector.jar is missing. Reinstall it.");
         }
         GeneralCommandLine command = new GeneralCommandLine(
-                        new InspectorCommand(java.get(), jar.get(), project, scope).arguments())
+                        new InspectorCommand(java.get(), jar.get(), project, scope, files).arguments())
                 .withWorkDirectory(project.toFile())
                 .withCharset(StandardCharsets.UTF_8);
         try {

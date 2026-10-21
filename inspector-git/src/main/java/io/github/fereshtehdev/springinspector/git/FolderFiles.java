@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -26,6 +27,17 @@ public final class FolderFiles {
             Set.of("target", "build", "out", "bin", "node_modules", "dist", "generated", "generated-sources");
 
     private FolderFiles() {}
+
+    /** The named files, relative to the project root, as they are on disk; files that do not exist are left out. */
+    public static CollectedChanges only(Path projectRoot, List<Path> paths) {
+        List<FileChange> files = paths.stream()
+                .map(path -> path.normalize())
+                .distinct()
+                .filter(path -> Files.isRegularFile(projectRoot.resolve(path), LinkOption.NOFOLLOW_LINKS))
+                .map(path -> new FileChange(path, ChangedLines.entireFile()))
+                .toList();
+        return new CollectedChanges(new ChangeSet(files), new WorkingTreeSources(projectRoot));
+    }
 
     public static CollectedChanges all(Path projectRoot) {
         List<FileChange> files = new ArrayList<>();

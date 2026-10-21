@@ -208,6 +208,29 @@ class CheckCommandTest {
     }
 
     @Test
+    void inspectsOnlyTheNamedFilesWhetherStagedOrNot() {
+        cli.write(INJECTABLE, INJECTABLE_SOURCE).write(CLEAN, CLEAN_SOURCE);
+
+        Result clean = cli.run("check", "--files", CLEAN);
+        Result injectable =
+                cli.run("check", "--files", cli.project().resolve(INJECTABLE).toString(), "src/Missing.java");
+
+        assertThat(clean.exitCode()).isEqualTo(ExitCodes.OK);
+        assertThat(clean.out()).startsWith("1 changed file");
+        assertThat(injectable.exitCode()).isEqualTo(ExitCodes.BLOCKED);
+        assertThat(injectable.out()).contains("BLOCKER src/main/java/com/acme/Orders.java:9");
+    }
+
+    @Test
+    void refusesFilesOutsideTheProject() {
+        Result result = cli.run(
+                "check", "--files", temp.resolve("home").resolve("Other.java").toString());
+
+        assertThat(result.exitCode()).isEqualTo(ExitCodes.USAGE);
+        assertThat(result.err()).contains("is not inside the project");
+    }
+
+    @Test
     void rejectsMoreThanOneScope() {
         assertThat(cli.run("check", "--all", "--staged").exitCode()).isEqualTo(ExitCodes.USAGE);
     }

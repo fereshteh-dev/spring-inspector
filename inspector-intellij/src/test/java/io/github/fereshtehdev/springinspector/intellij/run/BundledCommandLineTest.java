@@ -3,6 +3,7 @@ package io.github.fereshtehdev.springinspector.intellij.run;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import io.github.fereshtehdev.springinspector.intellij.editor.PatchText;
 import io.github.fereshtehdev.springinspector.intellij.report.Report;
 import io.github.fereshtehdev.springinspector.intellij.report.Report.Finding;
 import java.io.IOException;
@@ -67,6 +68,61 @@ class BundledCommandLineTest {
                         assertThat(finding.startLine()).isEqualTo(9);
                     });
         });
+    }
+
+    @Test
+    void producesPatchesThePluginCanApplyToTheNamedFiles() throws IOException, InterruptedException {
+        assumeTrue(Files.isRegularFile(JAR), "build the command line first with ./mvnw package");
+        assumeTrue(Runtime.version().feature() >= JavaRuntimes.REQUIRED_FEATURE, "needs Java 25 to run the jar");
+        Path project = Files.createDirectories(temp.resolve("project"));
+        Files.writeString(project.resolve("pom.xml"), "<project><modelVersion>4.0.0</modelVersion></project>");
+        Path source = Files.createDirectories(project.resolve("src/main/java/demo")).resolve("ResetTokens.java");
+        String code = """
+                package demo;
+
+                import java.util.Random;
+
+                class ResetTokens {
+
+                    private final Random tokenRandom = new Random();
+
+                    String newResetToken() {
+                        return Long.toHexString(tokenRandom.nextLong());
+                    }
+                }
+                """;
+        Files.writeString(source, code);
+        Files.writeString(project.resolve("src/main/java/demo/Other.java"), "package demo;\nclass Other {}\n");
+
+        RunOutcome outcome = run(new InspectorCommand(
+                java(), JAR.toAbsolutePath(), project, InspectionScope.FILES, List.of(Path.of("src/main/java/demo/ResetTokens.java"))));
+
+        assertThat(outcome).isInstanceOfSatisfying(RunOutcome.Completed.class, completed -> {
+            List<Finding> findings = completed.report().categories().stream()
+                    .flatMap(category -> category.findings().stream())
+                    .toList();
+            assertThat(findings).allSatisfy(finding -> assertThat(finding.file()).endsWith("ResetTokens.java"));
+            Finding fixable = findings.stream()
+                    .filter(finding -> finding.patch().isPresent())
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(PatchText.apply(code, fixable.patch().orElseThrow(), fixable.file()))
+                    .hasValueSatisfying(fixed -> assertThat(fixed).contains("SecureRandom").isNotEqualTo(code));
+        });
+    }
+
+    private RunOutcome run(InspectorCommand command) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(command.arguments())
+                .directory(command.project().toFile())
+                .redirectError(temp.resolve("stderr.txt").toFile())
+                .start();
+        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(process.waitFor(2, TimeUnit.MINUTES)).isTrue();
+        return RunOutcome.of(process.exitValue(), stdout, Files.readString(temp.resolve("stderr.txt")));
+    }
+
+    private static Path java() {
+        return Path.of(System.getProperty("java.home"), "bin", isWindows() ? "java.exe" : "java");
     }
 
     private static boolean isWindows() {

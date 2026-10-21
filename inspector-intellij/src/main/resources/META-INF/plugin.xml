@@ -10,6 +10,8 @@
     <ul>
       <li>Run it on the whole project or on your staged changes from the <b>Spring Inspector</b> tool window,
           or with <b>Tools | Inspect Project with Spring Inspector</b>.</li>
+      <li>Findings are underlined in the editor with a gutter icon; <b>Alt+Enter</b> applies the fix, with a preview.</li>
+      <li>Commits made from the IDE are checked first, like the git hook does.</li>
       <li>Double-click a finding to open it in the editor.</li>
       <li>Your code never leaves your machine: the inspector runs locally, in its own process.</li>
     </ul>
@@ -30,7 +32,18 @@
                                  displayName="Spring Inspector"
                                  instance="io.github.fereshtehdev.springinspector.intellij.settings.InspectorConfigurable"/>
         <notificationGroup id="Spring Inspector" displayType="BALLOON"/>
+        <intentionAction>
+            <className>io.github.fereshtehdev.springinspector.intellij.editor.ApplyFixIntention</className>
+            <category>Spring Inspector</category>
+            <skipBeforeAfter>true</skipBeforeAfter>
+        </intentionAction>
+        <checkinHandlerFactory implementation="io.github.fereshtehdev.springinspector.intellij.ui.InspectBeforeCommitFactory"/>
     </extensions>
+
+    <projectListeners>
+        <listener class="io.github.fereshtehdev.springinspector.intellij.editor.HighlightOpenedFiles"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </projectListeners>
 
     <actions>
         <action id="io.github.fereshtehdev.spring-inspector.run"

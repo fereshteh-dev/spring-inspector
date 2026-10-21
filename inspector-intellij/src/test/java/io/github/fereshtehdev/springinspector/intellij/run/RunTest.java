@@ -1,10 +1,12 @@
 package io.github.fereshtehdev.springinspector.intellij.run;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -31,12 +33,23 @@ class RunTest {
                         "-jar",
                         Path.of("plugin", "cli", "spring-inspector.jar").toString(),
                         "check",
-                        "--staged",
                         "--format",
                         "json",
                         "--project",
-                        "project");
+                        "project",
+                        "--staged");
         assertThat(InspectionScope.PROJECT.option()).isEqualTo("--all");
+        assertThat(new InspectorCommand(
+                                Path.of("java"),
+                                Path.of("cli.jar"),
+                                Path.of("project"),
+                                InspectionScope.FILES,
+                                List.of(Path.of("src", "A.java"), Path.of("pom.xml")))
+                        .arguments())
+                .endsWith("--files", Path.of("src", "A.java").toString(), "pom.xml");
+        assertThatThrownBy(() -> new InspectorCommand(
+                        Path.of("java"), Path.of("cli.jar"), Path.of("project"), InspectionScope.FILES, List.of()))
+                .hasMessageContaining("Name the files");
     }
 
     @Test

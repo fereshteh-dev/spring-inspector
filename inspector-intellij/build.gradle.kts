@@ -1,4 +1,5 @@
 import net.ltgt.gradle.errorprone.CheckSeverity
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
@@ -59,6 +60,14 @@ dependencies {
 intellijPlatform {
     buildSearchableOptions = false
     instrumentCode = false
+    // Checks binary compatibility with the oldest supported IDE, the last Community edition and the target; CI runs it.
+    pluginVerification {
+        ides {
+            create(IntelliJPlatformType.IntellijIdeaCommunity, "2025.1")
+            create(IntelliJPlatformType.IntellijIdeaCommunity, "2025.2")
+            current()
+        }
+    }
     pluginConfiguration {
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")

@@ -63,6 +63,7 @@ public final class GitWorkspace implements ChangeCollector, AutoCloseable {
                 case ChangeScope.Staged staged -> staged();
                 case ChangeScope.AgainstBase(String baseRef) -> againstBase(baseRef);
                 case ChangeScope.All all -> all();
+                case ChangeScope.Files(List<Path> paths) -> FolderFiles.only(projectRoot, paths);
             };
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read changes from git", e);

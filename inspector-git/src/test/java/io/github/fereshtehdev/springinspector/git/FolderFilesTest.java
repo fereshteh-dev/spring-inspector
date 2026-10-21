@@ -7,6 +7,7 @@ import io.github.fereshtehdev.springinspector.core.port.CollectedChanges;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,6 +38,17 @@ class FolderFilesTest {
                         Path.of("src", "main", "resources", "application.yml"));
         assertThat(changes.sources().read(Path.of("src", "main", "java", "demo", "App.java")))
                 .hasValueSatisfying(source -> assertThat(source.content()).isEqualTo("class App {}"));
+    }
+
+    @Test
+    void readsOnlyTheNamedFilesThatExist() throws IOException {
+        write("src/A.java", "class A {}");
+        write("src/B.java", "class B {}");
+
+        CollectedChanges changes = FolderFiles.only(
+                project, List.of(Path.of("src/A.java"), Path.of("src/./A.java"), Path.of("src/Missing.java")));
+
+        assertThat(changes.changeSet().files()).extracting(FileChange::path).containsExactly(Path.of("src", "A.java"));
     }
 
     @Test

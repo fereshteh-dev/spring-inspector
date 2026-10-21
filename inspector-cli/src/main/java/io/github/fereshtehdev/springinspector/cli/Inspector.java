@@ -100,15 +100,21 @@ final class Inspector {
     private CollectedChanges collect(Path projectRoot, ChangeScope scope) {
         Optional<GitWorkspace> git = GitWorkspace.find(projectRoot, environment);
         if (git.isEmpty()) {
-            if (scope instanceof ChangeScope.All) {
-                return FolderFiles.all(projectRoot);
-            }
-            throw new IllegalArgumentException(
-                    "Not inside a git repository: " + projectRoot + "; use --all to inspect every file");
+            return switch (scope) {
+                case ChangeScope.All all -> FolderFiles.all(projectRoot);
+                case ChangeScope.Files(List<Path> paths) -> FolderFiles.only(projectRoot, paths);
+                case ChangeScope.Staged staged -> throw notInGit(projectRoot);
+                case ChangeScope.AgainstBase base -> throw notInGit(projectRoot);
+            };
         }
         try (GitWorkspace workspace = git.get()) {
             return workspace.collect(scope);
         }
+    }
+
+    private static IllegalArgumentException notInGit(Path projectRoot) {
+        return new IllegalArgumentException(
+                "Not inside a git repository: " + projectRoot + "; use --all or --files to inspect files directly");
     }
 
     private boolean checksDependencies(InspectorConfig config) {

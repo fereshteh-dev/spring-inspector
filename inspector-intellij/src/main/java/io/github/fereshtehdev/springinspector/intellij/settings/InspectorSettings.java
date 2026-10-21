@@ -24,6 +24,15 @@ public final class InspectorSettings implements PersistentStateComponent<Inspect
         values.javaPath = javaPath.strip();
     }
 
+    /** Whether commits from the IDE are inspected first; set from the commit dialog. */
+    public boolean checkBeforeCommit() {
+        return values.checkBeforeCommit;
+    }
+
+    public void setCheckBeforeCommit(boolean check) {
+        values.checkBeforeCommit = check;
+    }
+
     @Override
     public Values getState() {
         return values;
@@ -37,5 +46,6 @@ public final class InspectorSettings implements PersistentStateComponent<Inspect
     /** The stored form; the IDE writes its public fields to XML. */
     public static final class Values {
         public String javaPath = "";
+        public boolean checkBeforeCommit = true;
     }
 }

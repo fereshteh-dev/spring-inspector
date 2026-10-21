@@ -1,6 +1,7 @@
 package io.github.fereshtehdev.springinspector.intellij.run;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,20 +9,36 @@ import java.util.List;
  * report. It runs in its own process, so the inspection can neither slow down nor crash the IDE. Its output is UTF-8
  * whatever the platform's default, so summaries and file names arrive intact.
  */
-public record InspectorCommand(Path java, Path jar, Path project, InspectionScope scope) {
+public record InspectorCommand(Path java, Path jar, Path project, InspectionScope scope, List<Path> files) {
+
+    public InspectorCommand {
+        files = List.copyOf(files);
+        if (scope == InspectionScope.FILES && files.isEmpty()) {
+            throw new IllegalArgumentException("Name the files to inspect");
+        }
+    }
+
+    public InspectorCommand(Path java, Path jar, Path project, InspectionScope scope) {
+        this(java, jar, project, scope, List.of());
+    }
 
     public List<String> arguments() {
-        return List.of(
+        List<String> arguments = new ArrayList<>(List.of(
                 java.toString(),
                 "-Dstdout.encoding=UTF-8",
                 "-Dstderr.encoding=UTF-8",
                 "-jar",
                 jar.toString(),
                 "check",
-                scope.option(),
                 "--format",
                 "json",
                 "--project",
-                project.toString());
+                project.toString()));
+        // Last, because --files takes every argument after it.
+        arguments.add(scope.option());
+        if (scope == InspectionScope.FILES) {
+            files.forEach(file -> arguments.add(file.toString()));
+        }
+        return List.copyOf(arguments);
     }
 }

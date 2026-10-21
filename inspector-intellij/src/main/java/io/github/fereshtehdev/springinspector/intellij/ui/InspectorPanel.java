@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,13 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import io.github.fereshtehdev.springinspector.intellij.editor.InspectionResults;
 import io.github.fereshtehdev.springinspector.intellij.report.Report;
 import io.github.fereshtehdev.springinspector.intellij.report.Report.CategoryReport;
 import io.github.fereshtehdev.springinspector.intellij.report.Report.Finding;
@@ -42,6 +47,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import javax.swing.Icon;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
@@ -109,6 +115,7 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
         DefaultActionGroup actions = new DefaultActionGroup(
                 new RunAction(InspectionScope.PROJECT, AllIcons.Actions.Execute),
                 new RunAction(InspectionScope.STAGED, AllIcons.Actions.Commit),
+                new InspectCurrentFileAction(),
                 new SettingsAction());
         ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SpringInspector", actions, true);
         toolbar.setTargetComponent(this);
@@ -119,8 +126,32 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
                 + "\nDouble-click or press Enter to open it in the editor."));
     }
 
+    /** Opens the tool window of the project and hands its panel to {@code action} once it is shown. */
+    public static void withPanel(Project project, Consumer<InspectorPanel> action) {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(InspectorToolWindowFactory.ID);
+        if (toolWindow == null) {
+            return;
+        }
+        toolWindow.activate(() -> {
+            Content content = toolWindow.getContentManager().getContent(0);
+            if (content != null && content.getComponent() instanceof InspectorPanel panel) {
+                action.accept(panel);
+            }
+        });
+    }
+
+    /** Shows the tool window with this finding selected. */
+    public static void reveal(Project project, Finding finding) {
+        withPanel(project, panel -> panel.select(finding));
+    }
+
     /** Starts a run in the background, unless one is already running. */
     public void run(InspectionScope scope) {
+        run(scope, List.of());
+    }
+
+    /** Starts a run on the given files, relative to the project root, in the background. */
+    public void run(InspectionScope scope, List<Path> files) {
         String basePath = project.getBasePath();
         if (basePath == null || !running.compareAndSet(false, true)) {
             return;
@@ -133,7 +164,7 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
             @Override
             public void run(ProgressIndicator indicator) {
                 indicator.setIndeterminate(true);
-                outcome = InspectorRunner.run(Path.of(basePath), scope, indicator);
+                outcome = InspectorRunner.run(Path.of(basePath), scope, files, indicator);
             }
 
             @Override
@@ -144,11 +175,13 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
         }.queue();
     }
 
-    private void show(RunOutcome outcome) {
+    /** Shows a run's outcome, also one that ran elsewhere, such as the check before a commit. */
+    public void show(RunOutcome outcome) {
         root.removeAllChildren();
         switch (outcome) {
             case RunOutcome.Completed completed -> {
                 Report report = completed.report();
+                InspectionResults.getInstance(project).publish(report);
                 for (CategoryReport category : report.categories()) {
                     DefaultMutableTreeNode node = new DefaultMutableTreeNode(category);
                     category.findings().forEach(finding -> node.add(new DefaultMutableTreeNode(finding, false)));
@@ -174,6 +207,21 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
         model.reload();
         for (int row = 0; row < tree.getRowCount(); row++) {
             tree.expandRow(row);
+        }
+    }
+
+    private void select(Finding finding) {
+        for (int index = 0; index < root.getChildCount(); index++) {
+            DefaultMutableTreeNode category = (DefaultMutableTreeNode) root.getChildAt(index);
+            for (int child = 0; child < category.getChildCount(); child++) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) category.getChildAt(child);
+                if (finding.equals(node.getUserObject())) {
+                    TreePath path = new TreePath(node.getPath());
+                    tree.setSelectionPath(path);
+                    tree.scrollPathToVisible(path);
+                    return;
+                }
+            }
         }
     }
 
@@ -229,6 +277,34 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
         @Override
         public void update(AnActionEvent event) {
             event.getPresentation().setEnabled(!running.get());
+        }
+
+        @Override
+        public ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.BGT;
+        }
+    }
+
+    private final class InspectCurrentFileAction extends DumbAwareAction {
+
+        InspectCurrentFileAction() {
+            super("Inspect Current File", "Run Spring Inspector on the file open in the editor", AllIcons.Actions.Find);
+        }
+
+        @Override
+        public void actionPerformed(AnActionEvent event) {
+            VirtualFile[] open = FileEditorManager.getInstance(project).getSelectedFiles();
+            if (open.length > 0) {
+                InspectionResults.getInstance(project)
+                        .relativePath(open[0])
+                        .ifPresent(path -> run(InspectionScope.FILES, List.of(Path.of(path))));
+            }
+        }
+
+        @Override
+        public void update(AnActionEvent event) {
+            event.getPresentation()
+                    .setEnabled(!running.get() && FileEditorManager.getInstance(project).getSelectedFiles().length > 0);
         }
 
         @Override

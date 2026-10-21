@@ -46,8 +46,12 @@ Works in IntelliJ IDEA (Community and Ultimate) and the other JetBrains IDEs, ve
 2. In IntelliJ, open **Settings → Plugins**, click **⚙ → Install Plugin from Disk…**, choose the zip and restart the
    IDE.
 3. Open the **Spring Inspector** tool window at the bottom, or use **Tools → Inspect Project with Spring Inspector**.
-4. Click **Inspect Whole project** (or **Inspect Staged changes**). Select a finding to read the explanation and
-   the fix; double-click it to jump to the code.
+4. Click **Inspect Whole project**, **Inspect Staged changes** or **Inspect Current File**. Select a finding to read
+   the explanation and the fix; double-click it to jump to the code.
+5. In the editor, findings are underlined with an icon in the gutter. Put the caret on one and press **Alt+Enter →
+   Apply Spring Inspector fix** to see the change and apply it.
+6. Commits made from IntelliJ are checked first; you can review the problems or commit anyway. Turn this off with
+   the **Check with Spring Inspector** option in the commit window.
 
 The inspector itself needs **Java 25 or newer**. IntelliJ IDEA 2026.2 already runs on Java 25, so there is nothing to
 set up. With an older IDE, install a JDK 25 and choose it in **Settings → Tools → Spring Inspector**.
@@ -60,6 +64,7 @@ Needs Java 25 or newer (`java -version`).
 java -jar spring-inspector.jar check --all                   # review the whole project
 java -jar spring-inspector.jar check                         # review only your staged changes
 java -jar spring-inspector.jar check --base main             # review everything since you branched off main
+java -jar spring-inspector.jar check --files src/main/java/com/acme/Orders.java   # review whole files
 java -jar spring-inspector.jar check --details security      # explain every finding of one category
 java -jar spring-inspector.jar install-hook                  # review every commit automatically
 java -jar spring-inspector.jar update                        # download vulnerability advisories (do this weekly)
@@ -116,8 +121,8 @@ To compile the plugin against an IntelliJ you have installed instead of download
 
 ## Status and roadmap
 
-Spring Inspector is young: version 0.1 is the first public release. Next come editor highlighting and one-click
-fixes in IntelliJ, the JetBrains Marketplace, architecture rules, and published accuracy numbers. See the
+Spring Inspector is young. Version 0.2 adds editor highlighting, one-click fixes and a check before commit to the
+IntelliJ plugin. Next come the JetBrains Marketplace, architecture rules, and published accuracy numbers. See the
 [specification](docs/SPEC.md) (section 16) and the [changelog](CHANGELOG.md).
 
 ## Documentation

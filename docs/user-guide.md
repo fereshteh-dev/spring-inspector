@@ -57,6 +57,7 @@ Open the **Spring Inspector** tool window at the bottom of the IDE.
 |--------|------|
 | ▶ **Inspect Whole project** | Reviews every file of the project |
 | **Inspect Staged changes** | Reviews only what you have staged for the next commit (needs git) |
+| **Inspect Current File** | Reviews the whole file open in the editor |
 | ⚙ **Settings** | Opens Settings → Tools → Spring Inspector |
 
 The plugin saves your open files and then runs in the background; you can keep working. When it finishes:
@@ -70,13 +71,30 @@ The plugin saves your open files and then runs in the background; you can keep w
 
 **Tools → Inspect Project with Spring Inspector** opens the tool window and reviews the whole project in one step.
 
+### In the editor
+
+After a run, findings are shown in the code like the IDE's own problems: underlined, marked in the scroll bar, and
+with an icon in the gutter. Hover over the icon to read the finding; click it to see all its details in the tool
+window. The marks follow your edits until the next run.
+
+When a finding comes with a fix, put the caret on its line and press **Alt+Enter → Apply Spring Inspector fix**. The
+preview shows the exact change before you apply it, and **Ctrl+Z** undoes it. If the code changed since the run, the
+fix is refused instead of being applied in the wrong place; run the inspection again.
+
+### Before a commit
+
+When you commit from IntelliJ, Spring Inspector first reviews the files in the commit. If the gate blocks, you can
+**Review** the problems (the commit stops and the tool window shows them), **Commit Anyway**, or **Cancel**. Turn the
+check on or off with **Check with Spring Inspector** in the commit window's options; the choice is remembered.
+
 The plugin uses the same rules and the same `spring-inspector.yml` as the command line, so both always agree. Each
 category shows at most 20 findings by default; set `max-findings-per-category` higher to see more.
 
 ## Using the command line
 
 ```
-spring-inspector check [--staged | --base <ref> | --all] [--details <category>] [--format terminal|json|sarif]
+spring-inspector check [--staged | --base <ref> | --all | --files <file>...] [--details <category>]
+                       [--format terminal|json|sarif]
                        [--project <dir>] [--config <file>] [--no-cache]
 spring-inspector init [--project <dir>]
 spring-inspector install-hook [--force] [--project <dir>]
@@ -90,6 +108,7 @@ spring-inspector update
 | `--staged` | Review staged changes. This is the default. |
 | `--base main` | Review everything changed since your branch left `main`. Good for pull requests. |
 | `--all` | Review every file. Works also for projects that are not in git. |
+| `--files <file>...` | Review these whole files, staged or not. Paths are relative to the project or absolute. |
 | `--details security` | Explain every finding of one category: `security`, `spring-boot`, `spring-ai`, `clean-code`, `architecture`, `migration`. |
 | `--format json` / `sarif` | Machine-readable output for other tools and for GitHub code scanning. |
 | `--project <dir>` | Review another directory instead of the current one. |
@@ -223,7 +242,11 @@ its path in **Settings → Tools → Spring Inspector**.
 
 **"Nothing to inspect"**: nothing is staged. Stage your changes, or use `--all` or `--base main`.
 
-**"Not inside a git repository"**: `--staged` and `--base` need git. Use `--all` for a project that is not in git.
+**"Not inside a git repository"**: `--staged` and `--base` need git. Use `--all` or `--files` for a project that is
+not in git.
+
+**Alt+Enter does not offer the fix**: only findings marked *fix available* have one, and the caret must be on the
+finding's line. If the file changed since the run, run the inspection again.
 
 **"No vulnerability advisories on this machine"**: run `spring-inspector update` once.
 

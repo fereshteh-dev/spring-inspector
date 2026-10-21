@@ -72,3 +72,11 @@ jobs:
       - name: Test and package the plugin
         working-directory: inspector-intellij
         run: ./gradlew --no-daemon test buildPlugin verifyPluginStructure
+
+      # The verifier downloads the IDEs it checks against (several GB); remove preinstalled toolchains we do not use.
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Check compatibility with the supported IDEs
+        working-directory: inspector-intellij
+        run: ./gradlew --no-daemon verifyPlugin

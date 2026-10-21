@@ -48,6 +48,14 @@ final class CheckCommand implements Callable<Integer> {
 
         @Option(names = "--all", description = "Inspect every file in the project.")
         boolean all;
+
+        @Option(
+                names = "--files",
+                arity = "1..*",
+                paramLabel = "<file>",
+                description = "Inspect these whole files, relative to the project or absolute.")
+        @Nullable
+        List<Path> files;
     }
 
     @ArgGroup(exclusive = true)
@@ -102,7 +110,7 @@ final class CheckCommand implements Callable<Integer> {
                 .toAbsolutePath()
                 .normalize();
         InspectionRun run = inspector.inspect(
-                root, changeScope(), !noCache, Optional.ofNullable(config).map(workingDirectory::resolve));
+                root, changeScope(root), !noCache, Optional.ofNullable(config).map(workingDirectory::resolve));
         warn(run);
         if (format == Format.TERMINAL) {
             out.println(headline(run, style));
@@ -116,12 +124,28 @@ final class CheckCommand implements Callable<Integer> {
         return run.report().gate().blocks() ? ExitCodes.BLOCKED : ExitCodes.OK;
     }
 
-    private ChangeScope changeScope() {
+    private ChangeScope changeScope(Path root) {
         if (scope == null || scope.staged) {
             return ChangeScope.staged();
         }
         String baseRef = scope.base;
+        List<Path> files = scope.files;
+        if (files != null) {
+            return ChangeScope.files(
+                    files.stream().map(file -> insideProject(root, file)).toList());
+        }
         return baseRef != null ? ChangeScope.againstBase(baseRef) : ChangeScope.all();
+    }
+
+    /** A file named on the command line, relative to the project root; files outside the project are refused. */
+    private Path insideProject(Path root, Path file) {
+        Path absolute = (file.isAbsolute() ? file : workingDirectory.resolve(file))
+                .toAbsolutePath()
+                .normalize();
+        if (!absolute.startsWith(root)) {
+            throw new IllegalArgumentException(file + " is not inside the project " + root);
+        }
+        return root.relativize(absolute);
     }
 
     private ReportRenderer renderer(Optional<Category> category) {

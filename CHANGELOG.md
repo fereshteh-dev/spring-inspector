@@ -2,6 +2,19 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
+## [0.2.0] - unreleased
+
+### Added
+
+- IntelliJ: findings are underlined in the editor, marked in the scroll bar and shown with gutter icons; clicking an
+  icon shows the finding in the tool window.
+- IntelliJ: **Alt+Enter → Apply Spring Inspector fix** applies a finding's patch after a preview, only if the code
+  is unchanged since the run.
+- IntelliJ: commits made from the IDE are inspected first, with Review / Commit Anyway / Cancel when the gate blocks.
+- IntelliJ: **Inspect Current File**.
+- Command line: `check --files <file>...` reviews whole files, also outside git.
+- CI checks the plugin with JetBrains' Plugin Verifier against IntelliJ IDEA 2025.1, 2025.2 and 2026.2.
+
 ## [0.1.1] - 2026-10-22
 
 ### Security
