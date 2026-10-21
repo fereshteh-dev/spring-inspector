@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db.internal:5432/orders
+    username: orders
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.example.com
+payments:
+  stripe:
+    api-key: ${STRIPE_API_KEY}
+    token-url: https://api.stripe.com/v1/tokens

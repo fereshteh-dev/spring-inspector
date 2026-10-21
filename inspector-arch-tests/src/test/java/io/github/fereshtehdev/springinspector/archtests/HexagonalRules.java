@@ -92,7 +92,13 @@ final class HexagonalRules {
                 .should()
                 .onlyDependOnClassesThat()
                 .resideInAnyPackage(
-                        "java..", "javax.crypto..", "org.jspecify..", JAVAPARSER, core(root), root + ".javamodel..")
+                        "java..",
+                        "javax.crypto..",
+                        "org.jspecify..",
+                        "org.snakeyaml.engine..",
+                        JAVAPARSER,
+                        core(root),
+                        root + ".javamodel..")
                 .because("the Java model is the parser behind a stable API, with no framework in it (ADR-0001)");
     }
 

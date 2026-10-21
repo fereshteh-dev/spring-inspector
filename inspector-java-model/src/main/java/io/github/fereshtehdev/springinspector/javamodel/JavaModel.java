@@ -11,11 +11,14 @@ import io.github.fereshtehdev.springinspector.core.domain.ProjectPath;
 import io.github.fereshtehdev.springinspector.core.domain.change.SourceFile;
 import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
 import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
+import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
 import io.github.fereshtehdev.springinspector.core.port.SourceProvider;
 import io.github.fereshtehdev.springinspector.javamodel.cache.CacheKey;
 import io.github.fereshtehdev.springinspector.javamodel.cache.FindingCache;
 import io.github.fereshtehdev.springinspector.javamodel.patch.LineIndex;
+import io.github.fereshtehdev.springinspector.javamodel.settings.SettingsFile;
+import io.github.fereshtehdev.springinspector.javamodel.settings.SettingsParser;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 /**
  * One inspection run's view of the project's Java sources. Pass it as the run's {@link SourceProvider} so every
@@ -42,6 +46,7 @@ public final class JavaModel implements SourceProvider {
     private final ConcurrentMap<Path, Lazy<Optional<SourceFile>>> reads = new ConcurrentHashMap<>();
     private final ConcurrentMap<Path, Lazy<Optional<String>>> hashes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Path, Lazy<Optional<ParsedUnit>>> units = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Path, Lazy<Optional<SettingsFile>>> settingsFiles = new ConcurrentHashMap<>();
     private final ConcurrentMap<Path, String> unparseable = new ConcurrentHashMap<>();
 
     public JavaModel(ProjectContext project, SourceProvider sources) {
@@ -84,6 +89,28 @@ public final class JavaModel implements SourceProvider {
     }
 
     List<Finding> findings(JavaCheck check, Path file, RuleOptions options) {
+        return cached(
+                check,
+                file,
+                options,
+                recorder -> parse(file)
+                        .map(unit -> check.inspect(new JavaFile(unit, resolver, recorder, options)))
+                        .orElse(List.of()));
+    }
+
+    List<Finding> findings(SettingsCheck check, Path file, RuleOptions options) {
+        return cached(
+                check,
+                file,
+                options,
+                recorder -> settings(file)
+                        .map(settings -> check.inspect(settings.withOptions(options)))
+                        .orElse(List.of()));
+    }
+
+    /** A check's findings for one file, from the cache when that file and everything it depended on are unchanged. */
+    private List<Finding> cached(
+            Check check, Path file, RuleOptions options, Function<DependencyRecorder, List<Finding>> inspect) {
         Optional<String> contentHash = contentHash(file);
         if (contentHash.isEmpty()) {
             return List.of();
@@ -101,11 +128,25 @@ public final class JavaModel implements SourceProvider {
             }
         }
         DependencyRecorder recorder = new DependencyRecorder();
-        List<Finding> findings = parse(file)
-                .map(unit -> check.inspect(new JavaFile(unit, resolver, recorder, options)))
-                .orElse(List.of());
+        List<Finding> findings = inspect.apply(recorder);
         key.ifPresent(cacheKey -> cache.store(cacheKey, findings, recorder.dependencies()));
         return findings;
+    }
+
+    Optional<SettingsFile> settings(Path file) {
+        Path path = ProjectPath.requireRelative(file);
+        return settingsFiles
+                .computeIfAbsent(path, key -> new Lazy<>(() -> read(key).flatMap(this::parseSettings)))
+                .get();
+    }
+
+    private Optional<SettingsFile> parseSettings(SourceFile source) {
+        try {
+            return Optional.of(new SettingsFile(source, SettingsParser.parse(source), RuleOptions.none()));
+        } catch (IllegalArgumentException e) {
+            unparseable.put(source.path(), e.getMessage());
+            return Optional.empty();
+        }
     }
 
     Optional<String> contentHash(Path file) {

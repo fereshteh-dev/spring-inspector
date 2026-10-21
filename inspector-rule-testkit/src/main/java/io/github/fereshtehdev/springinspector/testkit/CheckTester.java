@@ -61,6 +61,15 @@ public final class CheckTester {
         }
     }
 
+    /** The one-based line of the first occurrence of {@code text}, so tests need not count fixture lines. */
+    public static int lineOf(String content, String text) {
+        int index = content.indexOf(text);
+        if (index < 0) {
+            throw new IllegalArgumentException("Text not found: " + text);
+        }
+        return (int) content.substring(0, index).chars().filter(c -> c == '\n').count() + 1;
+    }
+
     public CheckTester file(String path, String content) {
         files.put(Path.of(path).normalize(), content);
         return this;
@@ -131,7 +140,7 @@ public final class CheckTester {
 
     /**
      * Applies the finding's patch to its file and returns the result, after checking that the patch applies cleanly
-     * and the result still parses.
+     * and a patched Java file still parses.
      */
     public String fixed(Finding finding) {
         Patch patch = finding.howToFix().patch().orElseThrow(() -> new AssertionError("Finding has no patch"));
@@ -140,12 +149,14 @@ public final class CheckTester {
             throw new AssertionError("Finding is in a file the project does not have: " + finding.location());
         }
         String fixed = UnifiedDiffs.apply(original, patch);
-        var parsed = new JavaParser(
-                        new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_25))
-                .parse(fixed);
-        assertThat(parsed.isSuccessful())
-                .as("patched file parses:%n%s%n%s", fixed, parsed.getProblems())
-                .isTrue();
+        if (finding.location().file().toString().endsWith(".java")) {
+            var parsed = new JavaParser(
+                            new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_25))
+                    .parse(fixed);
+            assertThat(parsed.isSuccessful())
+                    .as("patched file parses:%n%s%n%s", fixed, parsed.getProblems())
+                    .isTrue();
+        }
         return fixed;
     }
 

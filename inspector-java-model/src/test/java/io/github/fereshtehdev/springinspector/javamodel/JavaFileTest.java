@@ -82,6 +82,12 @@ class JavaFileTest {
     }
 
     @Test
+    void javaLangNeedsNoImport() {
+        assertThat(file.refersTo("Math", "java.lang.Math")).isTrue();
+        assertThat(file.refersTo("Math", "org.example.Math")).isFalse();
+    }
+
+    @Test
     void staticImportsDoNotImportTypes() {
         assertThat(file.refersTo("Objects", "java.util.Objects")).isFalse();
     }

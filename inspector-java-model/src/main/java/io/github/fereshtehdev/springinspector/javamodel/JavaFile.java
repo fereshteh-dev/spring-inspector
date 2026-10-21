@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
+import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.resolution.types.ResolvedType;
 import io.github.fereshtehdev.springinspector.core.domain.LineRange;
 import io.github.fereshtehdev.springinspector.core.domain.Location;
@@ -102,10 +103,40 @@ public final class JavaFile {
     }
 
     /**
+     * Whether the declaration of a type carries an annotation, such as {@code jakarta.persistence.Entity}; empty when
+     * the type cannot be resolved, for example because it lives in a jar.
+     */
+    public Optional<Boolean> typeHasAnnotation(Type type, String qualifiedAnnotation) {
+        return resolver.resolve(recorder, () -> {
+            ResolvedType resolved = type.resolve();
+            if (!resolved.isReferenceType()) {
+                return false;
+            }
+            // Read the annotation off the declaration's source and match it through that file's imports: resolving
+            // the annotation type itself would need its jar, which the project's sources do not include.
+            return resolved.asReferenceType()
+                    .getTypeDeclaration()
+                    .flatMap(declaration -> declaration.toAst())
+                    .map(declaration -> declaration instanceof NodeWithAnnotations<?> annotated
+                            && declaration
+                                    .findCompilationUnit()
+                                    .map(unit -> annotated.getAnnotations().stream()
+                                            .anyMatch(annotation ->
+                                                    refersTo(unit, annotation.getNameAsString(), qualifiedAnnotation)))
+                                    .orElse(false))
+                    .orElse(false);
+        });
+    }
+
+    /**
      * Whether a type name as written in this file means {@code qualifiedName}, judged from the package and imports
      * alone, which works without the type's jar.
      */
     public boolean refersTo(String nameAsWritten, String qualifiedName) {
+        return refersTo(unit(), nameAsWritten, qualifiedName);
+    }
+
+    private static boolean refersTo(CompilationUnit unit, String nameAsWritten, String qualifiedName) {
         if (nameAsWritten.equals(qualifiedName)) {
             return true;
         }
@@ -114,14 +145,17 @@ public final class JavaFile {
         if (!nameAsWritten.equals(qualifiedName.substring(lastDot + 1))) {
             return false;
         }
-        for (ImportDeclaration declaration : unit().getImports()) {
+        for (ImportDeclaration declaration : unit.getImports()) {
             String imported = declaration.getNameAsString();
             if (!declaration.isStatic()
                     && (declaration.isAsterisk() ? imported.equals(packageName) : imported.equals(qualifiedName))) {
                 return true;
             }
         }
-        return unit().getPackageDeclaration()
+        if (packageName.equals("java.lang")) {
+            return true;
+        }
+        return unit.getPackageDeclaration()
                 .map(declaration -> declaration.getNameAsString().equals(packageName))
                 .orElse(packageName.isEmpty());
     }

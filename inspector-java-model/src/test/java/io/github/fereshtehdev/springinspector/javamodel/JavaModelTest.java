@@ -153,6 +153,41 @@ class JavaModelTest {
     }
 
     @Test
+    void tellsWhetherAProjectTypeCarriesAnAnnotation() {
+        sources.put(main("com/acme/Order.java"), """
+                package com.acme;
+
+                import jakarta.persistence.Entity;
+
+                @Entity
+                class Order {}
+                """);
+        sources.put(APP, """
+                package com.acme;
+
+                import org.example.External;
+
+                class App {
+                    void save(Order order, Greeter greeter, External external) {}
+                }
+                """);
+        ScriptedCheck check = new ScriptedCheck(
+                "entities",
+                file -> file.unit().findAll(com.github.javaparser.ast.body.Parameter.class).stream()
+                        .map(parameter -> parameter.getNameAsString() + "="
+                                + file.typeHasAnnotation(parameter.getType(), "jakarta.persistence.Entity")
+                                        .map(String::valueOf)
+                                        .orElse("?"))
+                        .toList());
+
+        List<Finding> findings = run(new JavaModel(PROJECT, sources), check, APP);
+
+        assertThat(findings)
+                .extracting(finding -> finding.whatsWrong().description())
+                .containsExactly("order=true", "greeter=false", "external=?");
+    }
+
+    @Test
     void parsesEachFileOnceAndSharesTheTreeBetweenChecks() {
         JavaModel model = new JavaModel(PROJECT, sources);
         Set<CompilationUnit> units = ConcurrentHashMap.newKeySet();

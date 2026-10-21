@@ -1,0 +1,21 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    shutdown:
+      enabled: true
+---
+spring:
+  config:
+    activate:
+      on-profile: ops
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - env
+          - heapdump

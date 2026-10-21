@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db.internal:5432/orders
+    username: orders
+    password: Prod-Db-2024!x
+payments:
+  stripe:
+    api-key: "@STRIPE_KEY@"

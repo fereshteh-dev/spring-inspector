@@ -28,5 +28,10 @@
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-symbol-solver-core</artifactId>
         </dependency>
+        <!-- Reads Spring Boot YAML settings with line numbers; the version Jackson 3 YAML uses. Apache-2.0. -->
+        <dependency>
+            <groupId>org.snakeyaml</groupId>
+            <artifactId>snakeyaml-engine</artifactId>
+        </dependency>
     </dependencies>
 </project>

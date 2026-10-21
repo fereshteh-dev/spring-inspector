@@ -53,6 +53,7 @@
         <jgit.version>7.8.0.202609011348-r</jgit.version>
         <javaparser.version>3.28.2</javaparser.version>
         <picocli.version>4.7.7</picocli.version>
+        <snakeyaml-engine.version>3.0.1</snakeyaml-engine.version>
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
 
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -93,6 +94,11 @@
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
                 <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.snakeyaml</groupId>
+                <artifactId>snakeyaml-engine</artifactId>
+                <version>${snakeyaml-engine.version}</version>
             </dependency>
             <dependency>
                 <groupId>info.picocli</groupId>

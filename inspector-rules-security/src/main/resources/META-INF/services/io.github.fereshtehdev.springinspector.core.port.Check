@@ -1,2 +1,15 @@
 io.github.fereshtehdev.springinspector.rules.security.SqlStringConcatenationCheck
 io.github.fereshtehdev.springinspector.rules.security.WeakCryptographyCheck
+io.github.fereshtehdev.springinspector.rules.security.PermitAllSensitivePathCheck
+io.github.fereshtehdev.springinspector.rules.security.CsrfDisabledCheck
+io.github.fereshtehdev.springinspector.rules.security.ActuatorExposureCheck
+io.github.fereshtehdev.springinspector.rules.security.H2ConsoleEnabledCheck
+io.github.fereshtehdev.springinspector.rules.security.HardcodedSecretCheck
+io.github.fereshtehdev.springinspector.rules.security.SecretInSettingsCheck
+io.github.fereshtehdev.springinspector.rules.security.SecretLoggedCheck
+io.github.fereshtehdev.springinspector.rules.security.UnsafeDeserializationCheck
+io.github.fereshtehdev.springinspector.rules.security.XxeCheck
+io.github.fereshtehdev.springinspector.rules.security.PathTraversalCheck
+io.github.fereshtehdev.springinspector.rules.security.SsrfCheck
+io.github.fereshtehdev.springinspector.rules.security.InsecureRandomCheck
+io.github.fereshtehdev.springinspector.rules.security.MassAssignmentCheck
