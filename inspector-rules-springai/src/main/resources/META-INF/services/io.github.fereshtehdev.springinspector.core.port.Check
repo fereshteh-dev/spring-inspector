@@ -3,3 +3,4 @@ io.github.fereshtehdev.springinspector.rules.springai.SharedConversationIdCheck
 io.github.fereshtehdev.springinspector.rules.springai.DestructiveToolCheck
 io.github.fereshtehdev.springinspector.rules.springai.FullPromptLoggingCheck
 io.github.fereshtehdev.springinspector.rules.springai.LlmOutputToSinkCheck
+io.github.fereshtehdev.springinspector.rules.springai.SpringAi1xApiCheck

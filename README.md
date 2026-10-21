@@ -2,8 +2,8 @@
 
 Offline-first code inspector for Java, Spring Boot and Spring AI projects.
 
-> **Status:** early development. The command line works with a first set of 8 rules and per-project settings;
-> more rules and the web report are next.
+> **Status:** early development. The command line works with 50 rules across security, Spring Boot, Spring AI,
+> clean code and migration, and per-project settings; the advisory database and the web report are next.
 
 Run it before every commit and get a report card covering security, Spring Boot rules,
 Spring AI rules, clean code and architecture. Every finding says what's wrong, why it

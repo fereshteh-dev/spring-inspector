@@ -12,3 +12,6 @@ io.github.fereshtehdev.springinspector.rules.spring.BlockingInReactiveCheck
 io.github.fereshtehdev.springinspector.rules.spring.VirtualThreadPinningCheck
 io.github.fereshtehdev.springinspector.rules.spring.RestTemplateCheck
 io.github.fereshtehdev.springinspector.rules.spring.ValueSprawlCheck
+io.github.fereshtehdev.springinspector.rules.spring.JavaxNamespaceCheck
+io.github.fereshtehdev.springinspector.rules.spring.WebSecurityConfigurerAdapterCheck
+io.github.fereshtehdev.springinspector.rules.spring.SpringBootSupportCheck

@@ -52,7 +52,7 @@ public final class LongMethodCheck extends JavaCheck {
         List<Finding> findings = new ArrayList<>();
         for (CallableDeclaration<?> callable : file.unit().findAll(CallableDeclaration.class)) {
             body(callable).ifPresent(body -> {
-                int lines = codeLines(file, body);
+                int lines = CodeLines.count(file, body);
                 if (lines > maxBodyLines) {
                     findings.add(finding(
                             file,
@@ -78,28 +78,5 @@ public final class LongMethodCheck extends JavaCheck {
             case ConstructorDeclaration constructor -> Optional.of(constructor.getBody());
             default -> Optional.empty();
         };
-    }
-
-    private static int codeLines(JavaFile file, BlockStmt body) {
-        LineRange range = file.lines(body);
-        String[] lines = file.source().snippet(range).split("\\R", -1);
-        int code = 0;
-        boolean inBlockComment = false;
-        for (int i = 1; i < lines.length - 1; i++) {
-            String line = lines[i].strip();
-            if (inBlockComment) {
-                inBlockComment = !line.contains("*/");
-                continue;
-            }
-            if (line.isEmpty() || line.startsWith("//")) {
-                continue;
-            }
-            if (line.startsWith("/*")) {
-                inBlockComment = !line.contains("*/");
-                continue;
-            }
-            code++;
-        }
-        return code;
     }
 }

@@ -1,2 +1,12 @@
 io.github.fereshtehdev.springinspector.rules.cleancode.SwallowedExceptionCheck
 io.github.fereshtehdev.springinspector.rules.cleancode.LongMethodCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.DeepNestingCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.LongParameterListCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.LargeClassCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.GenericCatchCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.ReturnNullCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.OptionalMisuseCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.UnusedPrivateCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.DataClassToRecordCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.InstanceofChainCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.ThreadPoolForIoCheck
