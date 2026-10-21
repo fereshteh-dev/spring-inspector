@@ -1,6 +1,7 @@
 package io.github.fereshtehdev.springinspector.rules.cleancode;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.fereshtehdev.springinspector.core.domain.Category;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
@@ -51,7 +52,10 @@ class LongMethodCheckTest {
 
     @Test
     void reportsMethodsAndConstructorsWithMoreCodeLinesThanTheLimit() {
-        Finding finding = CheckTester.of(new LongMethodCheck(3)).source(SOURCE).singleFinding();
+        Finding finding = CheckTester.of(new LongMethodCheck())
+                .option("max-lines", "3")
+                .source(SOURCE)
+                .singleFinding();
 
         assertThat(finding.location().lines()).isEqualTo(LineRange.of(5, 10));
         assertThat(finding.severity()).isEqualTo(Severity.MINOR);
@@ -61,10 +65,24 @@ class LongMethodCheckTest {
 
     @Test
     void countsOnlyCodeLines() {
-        Finding finding =
-                CheckTester.of(new LongMethodCheck(2)).source(SOURCE).findings().getLast();
+        Finding finding = CheckTester.of(new LongMethodCheck())
+                .option("max-lines", "2")
+                .source(SOURCE)
+                .findings()
+                .getLast();
 
         assertThat(finding.whatsWrong().description()).isEqualTo("total has 3 lines of code; the limit is 2");
         assertThat(finding.whatsWrong().snippet()).isEqualTo("    int total(int a,");
+    }
+
+    @Test
+    void anInvalidLimitFailsTheCheckWithAClearMessage() {
+        CheckTester tester = CheckTester.of(new LongMethodCheck())
+                .option("max-lines", "many")
+                .source(SOURCE);
+
+        assertThatThrownBy(tester::findings)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'max-lines' must be a positive whole number");
     }
 }

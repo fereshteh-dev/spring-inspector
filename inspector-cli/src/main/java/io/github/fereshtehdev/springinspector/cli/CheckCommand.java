@@ -71,6 +71,13 @@ final class CheckCommand implements Callable<Integer> {
     @Option(names = "--no-cache", description = "Inspect everything again instead of reusing earlier results.")
     boolean noCache;
 
+    @Option(
+            names = "--config",
+            paramLabel = "<file>",
+            description = "Settings file to use instead of the project's spring-inspector.yml, e.g. for CI.")
+    @Nullable
+    Path config;
+
     private final Inspector inspector;
     private final Path workingDirectory;
     private final Style style;
@@ -94,7 +101,8 @@ final class CheckCommand implements Callable<Integer> {
         Path root = (project == null ? workingDirectory : workingDirectory.resolve(project))
                 .toAbsolutePath()
                 .normalize();
-        InspectionRun run = inspector.inspect(root, changeScope(), !noCache);
+        InspectionRun run = inspector.inspect(
+                root, changeScope(), !noCache, Optional.ofNullable(config).map(workingDirectory::resolve));
         warn(run);
         if (format == Format.TERMINAL) {
             out.println(headline(run, style));
@@ -126,6 +134,7 @@ final class CheckCommand implements Callable<Integer> {
 
     private void warn(InspectionRun run) {
         run.project().warnings().forEach(warning -> err.println("warning: " + warning));
+        run.warnings().forEach(warning -> err.println("warning: " + warning));
         for (Map.Entry<Path, String> file : run.unparseableFiles().entrySet()) {
             err.println("warning: could not parse " + file.getKey().toString().replace('\\', '/') + " ("
                     + file.getValue() + "); its findings are missing");
@@ -140,6 +149,7 @@ final class CheckCommand implements Callable<Integer> {
         versions.java().ifPresent(java -> parts.add("Java " + java.major()));
         versions.springBoot().ifPresent(boot -> parts.add("Spring Boot " + boot));
         versions.springAi().ifPresent(ai -> parts.add("Spring AI " + ai));
+        run.configFile().ifPresent(file -> parts.add("settings from " + file.getFileName()));
         return String.join(style.symbol(" · ", " - "), parts);
     }
 

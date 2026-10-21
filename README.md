@@ -2,7 +2,7 @@
 
 Offline-first code inspector for Java, Spring Boot and Spring AI projects.
 
-> **Status:** early development. The command line works with a first set of 8 rules; configuration,
+> **Status:** early development. The command line works with a first set of 8 rules and per-project settings;
 > more rules and the web report are next.
 
 Run it before every commit and get a report card covering security, Spring Boot rules,
@@ -30,6 +30,21 @@ java -jar spring-inspector.jar check --all                 # the whole project
 java -jar spring-inspector.jar check --details security    # why it matters and how to fix it
 java -jar spring-inspector.jar check --format sarif        # also: json
 java -jar spring-inspector.jar install-hook                # check every commit; skip once with --no-verify
+```
+
+## Configuration
+
+Settings live in `spring-inspector.yml` at the project root; `java -jar spring-inspector.jar init` writes a commented
+one with the defaults. You can turn rules and categories off, change severities and the gate, set rule options such
+as `cleancode.long-method: { max-lines: 80 }`, and ignore paths such as `**/generated/**`. Unknown settings are
+warnings; invalid values stop the run with the name of the setting. In CI, `check --config <file>` uses a file of
+your choice instead of the one in the repository.
+
+To silence one finding, write this on its line or the line above. The reason is required, and suppressed findings
+still appear in the report (and as suppressed results in SARIF), so reviews can audit them:
+
+```java
+// inspector:ignore security.sql-concatenation reason="column name comes from an enum"
 ```
 
 `check` exits with 1 when the gate blocks (a BLOCKER finding by default), 2 for a usage error and 3 if the tool

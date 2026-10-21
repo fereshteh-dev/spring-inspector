@@ -10,6 +10,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
 import io.github.fereshtehdev.springinspector.core.domain.LineRange;
+import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
 import io.github.fereshtehdev.springinspector.javamodel.Fixtures.Sources;
 import io.github.fereshtehdev.springinspector.javamodel.patch.Patches;
 import io.github.fereshtehdev.springinspector.javamodel.patch.TextEdit;
@@ -44,7 +45,8 @@ class JavaFileTest {
 
     private static JavaFile parse(String source) {
         JavaModel model = new JavaModel(PROJECT, new Sources().put(FILE, source));
-        return new JavaFile(model.parse(FILE).orElseThrow(), new Resolver(), new DependencyRecorder());
+        return new JavaFile(
+                model.parse(FILE).orElseThrow(), new Resolver(), new DependencyRecorder(), RuleOptions.none());
     }
 
     private final JavaFile file = parse(SOURCE);

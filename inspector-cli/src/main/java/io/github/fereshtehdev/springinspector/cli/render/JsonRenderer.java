@@ -1,11 +1,13 @@
 package io.github.fereshtehdev.springinspector.cli.render;
 
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
+import io.github.fereshtehdev.springinspector.core.domain.Location;
 import io.github.fereshtehdev.springinspector.core.domain.Reference;
 import io.github.fereshtehdev.springinspector.core.domain.report.CategoryResult;
 import io.github.fereshtehdev.springinspector.core.domain.report.CheckProblem;
 import io.github.fereshtehdev.springinspector.core.domain.report.GateDecision;
 import io.github.fereshtehdev.springinspector.core.domain.report.ReportCard;
+import io.github.fereshtehdev.springinspector.core.domain.report.SuppressedFinding;
 import io.github.fereshtehdev.springinspector.core.port.ReportRenderer;
 import java.io.IOException;
 import java.util.List;
@@ -50,6 +52,19 @@ public final class JsonRenderer implements ReportRenderer {
             category.put("hiddenFindings", result.hiddenFindings());
             ArrayNode findings = category.putArray("findings");
             result.findings().forEach(finding -> finding(findings.addObject(), finding));
+        }
+        ArrayNode suppressed = root.putArray("suppressed");
+        for (SuppressedFinding suppressedFinding : card.suppressed()) {
+            ObjectNode node = suppressed.addObject();
+            finding(node, suppressedFinding.finding());
+            node.put("reason", suppressedFinding.reason());
+        }
+        ArrayNode unjustified = root.putArray("suppressionsWithoutReason");
+        for (Location comment : card.suppressionsWithoutReason()) {
+            unjustified
+                    .addObject()
+                    .put("file", comment.file().toString().replace('\\', '/'))
+                    .put("line", comment.lines().start());
         }
         ArrayNode problems = root.putArray("problems");
         for (CheckProblem problem : card.problems()) {

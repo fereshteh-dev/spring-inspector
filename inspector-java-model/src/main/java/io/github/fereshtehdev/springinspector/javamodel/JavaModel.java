@@ -10,6 +10,7 @@ import io.github.fereshtehdev.springinspector.core.domain.Finding;
 import io.github.fereshtehdev.springinspector.core.domain.ProjectPath;
 import io.github.fereshtehdev.springinspector.core.domain.change.SourceFile;
 import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
+import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
 import io.github.fereshtehdev.springinspector.core.port.SourceProvider;
 import io.github.fereshtehdev.springinspector.javamodel.cache.CacheKey;
@@ -82,13 +83,16 @@ public final class JavaModel implements SourceProvider {
         return new TreeMap<>(unparseable);
     }
 
-    List<Finding> findings(JavaCheck check, Path file) {
+    List<Finding> findings(JavaCheck check, Path file, RuleOptions options) {
         Optional<String> contentHash = contentHash(file);
         if (contentHash.isEmpty()) {
             return List.of();
         }
         Optional<CacheKey> key = cache.enabled()
-                ? fingerprints.of(check).map(code -> new CacheKey(code + ";" + context, file, contentHash.get()))
+                ? fingerprints
+                        .of(check)
+                        .map(code -> new CacheKey(
+                                code + ";" + options.fingerprint() + ";" + context, file, contentHash.get()))
                 : Optional.empty();
         if (key.isPresent()) {
             Optional<List<Finding>> cached = cache.lookup(key.get(), this::contentHash);
@@ -98,7 +102,7 @@ public final class JavaModel implements SourceProvider {
         }
         DependencyRecorder recorder = new DependencyRecorder();
         List<Finding> findings = parse(file)
-                .map(unit -> check.inspect(new JavaFile(unit, resolver, recorder)))
+                .map(unit -> check.inspect(new JavaFile(unit, resolver, recorder, options)))
                 .orElse(List.of());
         key.ifPresent(cacheKey -> cache.store(cacheKey, findings, recorder.dependencies()));
         return findings;

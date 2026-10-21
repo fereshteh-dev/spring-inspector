@@ -1,0 +1,39 @@
+# Settings for Spring Inspector. Every setting is optional: delete what you do not need.
+#
+# To silence one finding, put this on its line or the line above, with a reason:
+#   // inspector:ignore <rule-id> reason="why this is fine here"
+
+gate:
+  # Block the commit when a finding is at least this severe: blocker, major, minor or info.
+  block-on: blocker
+  # Also block when the score drops below this (0-100):
+  # minimum-score: 70
+
+categories:
+  # Turn whole categories off: security, spring-boot, spring-ai, clean-code, architecture, migration.
+  disabled: []
+
+rules:
+  # Turn single rules off, for example spring.field-injection.
+  disabled: []
+  # Change how severe a rule's findings are, for example:
+  #   security.weak-cryptography: blocker
+  severity: {}
+  # Settings of individual rules.
+  options:
+    cleancode.long-method:
+      max-lines: 60
+
+# Files that are never inspected. ** matches any number of directories, including none.
+ignore:
+  - "**/generated/**"
+  - "**/generated-sources/**"
+
+# Show at most this many findings per category.
+max-findings-per-category: 20
+
+# Stop a rule that takes longer than this on one run: for example 5s, 500ms or 1m.
+check-timeout: 5s
+
+# true: report only findings on changed lines. false: anywhere in the changed files.
+changed-lines-only: true

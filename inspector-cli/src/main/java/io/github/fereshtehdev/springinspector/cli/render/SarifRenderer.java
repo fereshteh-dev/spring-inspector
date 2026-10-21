@@ -2,6 +2,7 @@ package io.github.fereshtehdev.springinspector.cli.render;
 
 import io.github.fereshtehdev.springinspector.core.domain.Category;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
+import io.github.fereshtehdev.springinspector.core.domain.Location;
 import io.github.fereshtehdev.springinspector.core.domain.RuleId;
 import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.report.CategoryResult;
@@ -34,6 +35,7 @@ public final class SarifRenderer implements ReportRenderer {
     public void render(ReportCard card, Appendable out) throws IOException {
         List<Finding> findings = new ArrayList<>();
         card.categories().stream().map(CategoryResult::findings).forEach(findings::addAll);
+        card.suppressed().forEach(suppressed -> findings.add(suppressed.finding()));
         Map<RuleId, Integer> ruleIndex = new LinkedHashMap<>();
         findings.forEach(finding -> ruleIndex.putIfAbsent(finding.ruleId(), ruleIndex.size()));
 
@@ -49,12 +51,30 @@ public final class SarifRenderer implements ReportRenderer {
             rule(rules.addObject(), ruleId, findings);
         }
         ArrayNode results = run.putArray("results");
-        for (Finding finding : findings) {
-            result(results.addObject(), finding, Objects.requireNonNull(ruleIndex.get(finding.ruleId())));
+        int suppressedFrom = findings.size() - card.suppressed().size();
+        for (int i = 0; i < findings.size(); i++) {
+            Finding finding = findings.get(i);
+            ObjectNode result = results.addObject();
+            result(result, finding, Objects.requireNonNull(ruleIndex.get(finding.ruleId())));
+            if (i >= suppressedFrom) {
+                result.putArray("suppressions")
+                        .addObject()
+                        .put("kind", "inSource")
+                        .put(
+                                "justification",
+                                card.suppressed().get(i - suppressedFrom).reason());
+            }
         }
         ObjectNode invocation = run.putArray("invocations").addObject();
         invocation.put("executionSuccessful", card.problems().isEmpty());
         ArrayNode notifications = invocation.putArray("toolExecutionNotifications");
+        for (Location comment : card.suppressionsWithoutReason()) {
+            notifications
+                    .addObject()
+                    .put("level", "warning")
+                    .putObject("message")
+                    .put("text", "inspector:ignore at " + comment + " was not applied: it needs reason=\"...\"");
+        }
         for (CheckProblem problem : card.problems()) {
             notifications
                     .addObject()

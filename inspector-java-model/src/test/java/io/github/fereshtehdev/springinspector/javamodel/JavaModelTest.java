@@ -10,6 +10,10 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
+import io.github.fereshtehdev.springinspector.core.domain.RuleId;
+import io.github.fereshtehdev.springinspector.core.domain.project.InspectorConfig;
+import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
+import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
 import io.github.fereshtehdev.springinspector.core.domain.report.ReportCard;
 import io.github.fereshtehdev.springinspector.core.engine.InspectionEngine;
 import io.github.fereshtehdev.springinspector.core.port.Check;
@@ -21,6 +25,7 @@ import io.github.fereshtehdev.springinspector.javamodel.cache.FindingCache;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,6 +81,31 @@ class JavaModelTest {
     /** One run with a cache opened from and saved to disk, as a command-line run would do. */
     private List<Finding> runCached(Check check) {
         return runCached(check, JavaModelTest::sameBuild);
+    }
+
+    private static InspectorConfig withOptions(Map<String, String> options) {
+        InspectorConfig defaults = InspectorConfig.defaults();
+        return new InspectorConfig(
+                defaults.disabledCategories(),
+                defaults.disabledRules(),
+                defaults.severityOverrides(),
+                defaults.checkTimeout(),
+                defaults.maxFindingsPerCategory(),
+                defaults.changedLinesOnly(),
+                defaults.gatePolicy(),
+                Map.of(RuleId.of("options"), new RuleOptions(options)),
+                List.of());
+    }
+
+    private List<Finding> runCached(Check check, InspectorConfig config) {
+        FindingCache cache = FindingCache.open(project, secret);
+        ProjectContext configured =
+                new ProjectContext(PROJECT.root(), PROJECT.versions(), PROJECT.buildTool(), PROJECT.modules(), config);
+        JavaModel model = new JavaModel(configured, sources, cache, JavaModelTest::sameBuild);
+        InspectionInput input = input(model, APP);
+        List<Finding> findings = check.inspect(new InspectionInput(configured, input.changeSet(), input.sources()));
+        assertThat(cache.save()).isTrue();
+        return findings;
     }
 
     private List<Finding> runCached(Check check, CheckFingerprints fingerprints) {
@@ -247,6 +277,27 @@ class JavaModelTest {
         assertThat(second)
                 .extracting(finding -> finding.whatsWrong().description())
                 .containsExactly("com.acme.Helper");
+    }
+
+    @Test
+    void checksReadTheirOptionsAndChangingThemInvalidatesTheCachedResult() {
+        Check reportsOptions =
+                new ScriptedCheck("options", file -> List.of(file.options().fingerprint()));
+        InspectorConfig eighty = withOptions(Map.of("max-lines", "80"));
+        InspectorConfig ninety = withOptions(Map.of("max-lines", "90"));
+
+        List<Finding> first = runCached(reportsOptions, eighty);
+        ScriptedCheck again =
+                new ScriptedCheck("options", file -> List.of(file.options().fingerprint()));
+        List<Finding> second = runCached(again, ninety);
+
+        assertThat(first)
+                .extracting(finding -> finding.whatsWrong().description())
+                .containsExactly("max-lines=80");
+        assertThat(second)
+                .extracting(finding -> finding.whatsWrong().description())
+                .containsExactly("max-lines=90");
+        assertThat(again.inspected()).isEqualTo(1);
     }
 
     @Test

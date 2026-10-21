@@ -5,14 +5,17 @@ import io.github.fereshtehdev.springinspector.core.domain.RuleId;
 import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.change.ChangeSet;
 import io.github.fereshtehdev.springinspector.core.domain.change.FileChange;
+import io.github.fereshtehdev.springinspector.core.domain.change.SourceFile;
 import io.github.fereshtehdev.springinspector.core.domain.project.BuildTool;
 import io.github.fereshtehdev.springinspector.core.domain.project.DetectedVersions;
 import io.github.fereshtehdev.springinspector.core.domain.project.GatePolicy;
 import io.github.fereshtehdev.springinspector.core.domain.project.InspectorConfig;
+import io.github.fereshtehdev.springinspector.core.domain.project.PathPattern;
 import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +38,8 @@ public final class Inputs {
     private GatePolicy gatePolicy = GatePolicy.defaults();
     private DetectedVersions versions = DetectedVersions.none();
     private ChangeSet changeSet = ChangeSet.of(FileChange.entireFile(APP_FILE));
+    private final Map<Path, String> sources = new HashMap<>();
+    private final List<PathPattern> ignoredPaths = new ArrayList<>();
 
     private Inputs() {}
 
@@ -92,6 +97,16 @@ public final class Inputs {
         return this;
     }
 
+    public Inputs withSource(String path, String content) {
+        sources.put(Path.of(path).normalize(), content);
+        return this;
+    }
+
+    public Inputs ignoring(String glob) {
+        ignoredPaths.add(PathPattern.of(glob));
+        return this;
+    }
+
     public InspectionInput build() {
         InspectorConfig config = new InspectorConfig(
                 disabledCategories,
@@ -100,8 +115,14 @@ public final class Inputs {
                 checkTimeout,
                 maxFindingsPerCategory,
                 changedLinesOnly,
-                gatePolicy);
+                gatePolicy,
+                Map.of(),
+                ignoredPaths);
         ProjectContext project = new ProjectContext(Path.of("project"), versions, BuildTool.MAVEN, List.of(), config);
-        return new InspectionInput(project, changeSet, path -> Optional.empty());
+        Map<Path, String> files = Map.copyOf(sources);
+        return new InspectionInput(
+                project,
+                changeSet,
+                path -> Optional.ofNullable(files.get(path.normalize())).map(content -> new SourceFile(path, content)));
     }
 }

@@ -23,5 +23,10 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>inspector-core</artifactId>
         </dependency>
+        <!-- Reads spring-inspector.yml; Jackson 3 as managed by Spring Boot 4.1. Apache-2.0. -->
+        <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
     </dependencies>
 </project>

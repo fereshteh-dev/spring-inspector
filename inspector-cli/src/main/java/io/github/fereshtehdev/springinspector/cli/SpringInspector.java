@@ -63,6 +63,7 @@ public final class SpringInspector implements Runnable {
         String version = Version.current();
         CommandLine commandLine = new CommandLine(new SpringInspector(err))
                 .addSubcommand(new CheckCommand(inspector, workingDirectory, style, version, out, err))
+                .addSubcommand(new InitCommand(workingDirectory, out, err))
                 .addSubcommand(
                         new InstallHookCommand(new HookInstaller(environment), launcher, workingDirectory, out, err))
                 .setCaseInsensitiveEnumValuesAllowed(true)

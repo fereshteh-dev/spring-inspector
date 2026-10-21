@@ -3,6 +3,8 @@ package io.github.fereshtehdev.springinspector.core.engine;
 import io.github.fereshtehdev.springinspector.core.domain.Category;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
 import io.github.fereshtehdev.springinspector.core.domain.RuleId;
+import io.github.fereshtehdev.springinspector.core.domain.change.ChangeSet;
+import io.github.fereshtehdev.springinspector.core.domain.change.FileChange;
 import io.github.fereshtehdev.springinspector.core.domain.project.InspectorConfig;
 import io.github.fereshtehdev.springinspector.core.domain.report.ReportCard;
 import io.github.fereshtehdev.springinspector.core.domain.report.Score;
@@ -29,15 +31,33 @@ public final class InspectionEngine {
 
     public ReportCard inspect(InspectionInput input) {
         InspectorConfig config = input.project().config();
-        List<Check> selected = CheckSelection.applicableTo(input.project(), checks);
-        CheckRun run = new CheckRunner(config.checkTimeout()).run(selected, input);
-        List<Finding> findings = FindingPipeline.process(run.findings(), config, input.changeSet());
+        InspectionInput inspected = withoutIgnoredFiles(input);
+        List<Check> selected = CheckSelection.applicableTo(inspected.project(), checks);
+        CheckRun run = new CheckRunner(config.checkTimeout()).run(selected, inspected);
+        List<Finding> processed = FindingPipeline.process(run.findings(), config, inspected.changeSet()).stream()
+                .filter(finding -> !config.isIgnored(finding.location().file()))
+                .toList();
+        Suppressions.Outcome outcome = Suppressions.apply(processed, inspected.sources());
+        List<Finding> findings = outcome.kept();
         Score score = Scoring.score(findings);
         return new ReportCard(
                 CategoryResults.of(reportedCategories(selected, findings), findings, config.maxFindingsPerCategory()),
                 score,
                 Gate.decide(config.gatePolicy(), findings, score),
-                run.problems());
+                run.problems(),
+                outcome.suppressed(),
+                outcome.withoutReason());
+    }
+
+    private static InspectionInput withoutIgnoredFiles(InspectionInput input) {
+        InspectorConfig config = input.project().config();
+        if (config.ignoredPaths().isEmpty()) {
+            return input;
+        }
+        List<FileChange> kept = input.changeSet().files().stream()
+                .filter(file -> !config.isIgnored(file.path()))
+                .toList();
+        return new InspectionInput(input.project(), new ChangeSet(kept), input.sources());
     }
 
     private static Set<Category> reportedCategories(List<Check> selected, List<Finding> findings) {

@@ -13,6 +13,7 @@ import io.github.fereshtehdev.springinspector.core.domain.project.BuildTool;
 import io.github.fereshtehdev.springinspector.core.domain.project.DetectedVersions;
 import io.github.fereshtehdev.springinspector.core.domain.project.InspectorConfig;
 import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
+import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
 import io.github.fereshtehdev.springinspector.core.domain.project.Version;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
@@ -38,6 +39,7 @@ public final class CheckTester {
     private final Check check;
     private final Map<Path, String> files = new LinkedHashMap<>();
     private DetectedVersions versions = DetectedVersions.none();
+    private final Map<String, String> options = new LinkedHashMap<>();
 
     private CheckTester(Check check) {
         this.check = check;
@@ -69,6 +71,12 @@ public final class CheckTester {
         return file(sourcePath(content), content);
     }
 
+    /** Sets an option of the check under test, as spring-inspector.yml would. */
+    public CheckTester option(String key, String value) {
+        options.put(key, value);
+        return this;
+    }
+
     public CheckTester javaVersion(String version) {
         versions =
                 new DetectedVersions(Optional.of(Version.parse(version)), versions.springBoot(), versions.springAi());
@@ -91,8 +99,18 @@ public final class CheckTester {
     }
 
     public List<Finding> findings() {
-        ProjectContext project =
-                new ProjectContext(Path.of("."), versions, BuildTool.MAVEN, List.of(), InspectorConfig.defaults());
+        InspectorConfig defaults = InspectorConfig.defaults();
+        InspectorConfig config = new InspectorConfig(
+                defaults.disabledCategories(),
+                defaults.disabledRules(),
+                defaults.severityOverrides(),
+                defaults.checkTimeout(),
+                defaults.maxFindingsPerCategory(),
+                defaults.changedLinesOnly(),
+                defaults.gatePolicy(),
+                Map.of(check.id(), new RuleOptions(options)),
+                List.of());
+        ProjectContext project = new ProjectContext(Path.of("."), versions, BuildTool.MAVEN, List.of(), config);
         List<FileChange> changes = files.keySet().stream()
                 .map(path -> FileChange.entireFile(path.toString()))
                 .toList();
@@ -138,6 +156,7 @@ public final class CheckTester {
         after.files.putAll(files);
         after.files.put(finding.location().file(), fixed);
         after.versions = versions;
+        after.options.putAll(options);
         return after;
     }
 

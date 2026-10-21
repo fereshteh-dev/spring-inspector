@@ -3,6 +3,7 @@ package io.github.fereshtehdev.springinspector.cli.render;
 import io.github.fereshtehdev.springinspector.cli.render.Style.Ansi;
 import io.github.fereshtehdev.springinspector.core.domain.Category;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
+import io.github.fereshtehdev.springinspector.core.domain.Location;
 import io.github.fereshtehdev.springinspector.core.domain.Reference;
 import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.report.CategoryResult;
@@ -10,6 +11,7 @@ import io.github.fereshtehdev.springinspector.core.domain.report.CheckProblem;
 import io.github.fereshtehdev.springinspector.core.domain.report.GateDecision;
 import io.github.fereshtehdev.springinspector.core.domain.report.ReportCard;
 import io.github.fereshtehdev.springinspector.core.domain.report.SeverityCounts;
+import io.github.fereshtehdev.springinspector.core.domain.report.SuppressedFinding;
 import io.github.fereshtehdev.springinspector.core.port.ReportRenderer;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,12 +66,27 @@ public final class TerminalRenderer implements ReportRenderer {
             out.append(style.paint("  " + style.symbol("⚠️ ", "! ") + Problems.describe(problem), Ansi.YELLOW))
                     .append('\n');
         }
+        for (Location comment : card.suppressionsWithoutReason()) {
+            out.append(style.paint(
+                            "  " + style.symbol("⚠️ ", "! ") + "inspector:ignore at " + comment
+                                    + " was not applied: it needs reason=\"...\"",
+                            Ansi.YELLOW))
+                    .append('\n');
+        }
+        if (!card.suppressed().isEmpty()) {
+            out.append(style.paint(
+                            "  " + card.suppressed().size() + " suppressed with inspector:ignore"
+                                    + (details.isEmpty() ? "" : "; reasons below"),
+                            Ansi.DIM))
+                    .append('\n');
+        }
         out.append('\n');
         renderGate(card.gate(), out);
         if (details.isPresent()) {
             Optional<CategoryResult> detailed = details.flatMap(card::category);
             if (detailed.isPresent()) {
                 renderDetails(detailed.get(), out);
+                renderSuppressed(card, detailed.get().category(), out);
             } else {
                 out.append("\n  No ").append(Categories.title(details.get())).append(" checks ran on these changes.\n");
             }
@@ -121,6 +138,26 @@ public final class TerminalRenderer implements ReportRenderer {
                     out.append("     - ").append(reason).append('\n');
                 }
             }
+        }
+    }
+
+    private void renderSuppressed(ReportCard card, Category category, Appendable out) throws IOException {
+        List<SuppressedFinding> inCategory = card.suppressed().stream()
+                .filter(suppressed -> suppressed.finding().category() == category)
+                .toList();
+        if (inCategory.isEmpty()) {
+            return;
+        }
+        out.append('\n').append(style.paint("Suppressed", Ansi.BOLD)).append('\n');
+        for (SuppressedFinding suppressed : inCategory) {
+            Finding finding = suppressed.finding();
+            out.append(DETAIL_INDENT)
+                    .append(style.paint(finding.location().toString(), Ansi.CYAN))
+                    .append("  ")
+                    .append(finding.ruleId().value())
+                    .append(style.symbol(" · ", " - "))
+                    .append(suppressed.reason())
+                    .append('\n');
         }
     }
 

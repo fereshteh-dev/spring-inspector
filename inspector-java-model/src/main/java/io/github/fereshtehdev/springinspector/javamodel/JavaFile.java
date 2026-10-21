@@ -13,6 +13,7 @@ import io.github.fereshtehdev.springinspector.core.domain.LineRange;
 import io.github.fereshtehdev.springinspector.core.domain.Location;
 import io.github.fereshtehdev.springinspector.core.domain.Patch;
 import io.github.fereshtehdev.springinspector.core.domain.change.SourceFile;
+import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
 import io.github.fereshtehdev.springinspector.javamodel.patch.LineIndex;
 import io.github.fereshtehdev.springinspector.javamodel.patch.Patches;
 import io.github.fereshtehdev.springinspector.javamodel.patch.TextEdit;
@@ -30,11 +31,18 @@ public final class JavaFile {
     private final ParsedUnit parsed;
     private final Resolver resolver;
     private final DependencyRecorder recorder;
+    private final RuleOptions options;
 
-    JavaFile(ParsedUnit parsed, Resolver resolver, DependencyRecorder recorder) {
+    JavaFile(ParsedUnit parsed, Resolver resolver, DependencyRecorder recorder, RuleOptions options) {
         this.parsed = parsed;
         this.resolver = resolver;
         this.recorder = recorder;
+        this.options = options;
+    }
+
+    /** The running check's settings from spring-inspector.yml. */
+    public RuleOptions options() {
+        return options;
     }
 
     public Path path() {

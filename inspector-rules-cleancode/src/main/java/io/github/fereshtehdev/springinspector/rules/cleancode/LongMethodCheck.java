@@ -19,13 +19,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Methods and constructors whose body has more lines than {@value #DEFAULT_MAX_BODY_LINES}, blank lines and lines
- * holding only comments excluded. The threshold becomes configurable with spring-inspector.yml.
+ * Methods and constructors whose body has more lines of code than {@code max-lines} (default
+ * {@value #DEFAULT_MAX_BODY_LINES}), blank lines and lines holding only comments excluded.
  */
 public final class LongMethodCheck extends JavaCheck {
 
     static final RuleId ID = RuleId.of("cleancode.long-method");
     static final int DEFAULT_MAX_BODY_LINES = 60;
+    static final String MAX_LINES = "max-lines";
 
     private static final WhyItMatters WHY = new WhyItMatters(
             "A long method does several things at once. It is hard to name, hard to test in parts, and every change"
@@ -34,16 +35,6 @@ public final class LongMethodCheck extends JavaCheck {
 
     private static final HowToFix FIX = HowToFix.withoutPatch(
             "Extract the steps into well-named private methods, or move a cohesive part into its own class.");
-
-    private final int maxBodyLines;
-
-    public LongMethodCheck() {
-        this(DEFAULT_MAX_BODY_LINES);
-    }
-
-    LongMethodCheck(int maxBodyLines) {
-        this.maxBodyLines = maxBodyLines;
-    }
 
     @Override
     public RuleId id() {
@@ -57,6 +48,7 @@ public final class LongMethodCheck extends JavaCheck {
 
     @Override
     protected List<Finding> inspect(JavaFile file) {
+        int maxBodyLines = file.options().positiveInteger(MAX_LINES).orElse(DEFAULT_MAX_BODY_LINES);
         List<Finding> findings = new ArrayList<>();
         for (CallableDeclaration<?> callable : file.unit().findAll(CallableDeclaration.class)) {
             body(callable).ifPresent(body -> {
