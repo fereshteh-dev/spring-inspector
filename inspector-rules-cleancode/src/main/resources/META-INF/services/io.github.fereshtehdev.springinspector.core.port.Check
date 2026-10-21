@@ -1,0 +1,2 @@
+io.github.fereshtehdev.springinspector.rules.cleancode.SwallowedExceptionCheck
+io.github.fereshtehdev.springinspector.rules.cleancode.LongMethodCheck

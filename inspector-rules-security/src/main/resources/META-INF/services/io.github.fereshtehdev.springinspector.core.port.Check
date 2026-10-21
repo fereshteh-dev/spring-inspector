@@ -1,0 +1,2 @@
+io.github.fereshtehdev.springinspector.rules.security.SqlStringConcatenationCheck
+io.github.fereshtehdev.springinspector.rules.security.WeakCryptographyCheck

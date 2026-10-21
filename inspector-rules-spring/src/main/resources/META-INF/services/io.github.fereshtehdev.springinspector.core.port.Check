@@ -1,0 +1,2 @@
+io.github.fereshtehdev.springinspector.rules.spring.FieldInjectionCheck
+io.github.fereshtehdev.springinspector.rules.spring.Jackson2InBoot4Check
