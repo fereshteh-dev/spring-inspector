@@ -75,6 +75,16 @@ public final class SarifRenderer implements ReportRenderer {
                     .putObject("message")
                     .put("text", "inspector:ignore at " + comment + " was not applied: it needs reason=\"...\"");
         }
+        card.advisories().ifPresent(status -> {
+            status.updatedAt()
+                    .ifPresent(updated -> run.putObject("properties").put("advisoriesUpdatedAt", updated.toString()));
+            status.warning()
+                    .ifPresent(warning -> notifications
+                            .addObject()
+                            .put("level", "warning")
+                            .putObject("message")
+                            .put("text", warning));
+        });
         for (CheckProblem problem : card.problems()) {
             notifications
                     .addObject()

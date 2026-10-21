@@ -124,8 +124,9 @@ class AdvisoryUpdaterTest {
 
     static String md5(byte[] data) {
         try {
-            return Base64.getEncoder()
-                    .encodeToString(MessageDigest.getInstance("MD5").digest(data));
+            // inspector:ignore security.weak-cryptography reason="builds the checksum the storage service publishes"
+            byte[] digest = MessageDigest.getInstance("MD5").digest(data);
+            return Base64.getEncoder().encodeToString(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }

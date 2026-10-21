@@ -39,6 +39,17 @@ public final class JsonRenderer implements ReportRenderer {
         if (card.gate() instanceof GateDecision.Block(List<String> blockReasons)) {
             blockReasons.forEach(reasons::add);
         }
+        card.advisories().ifPresent(status -> {
+            ObjectNode advisories = root.putObject("advisories");
+            status.updatedAt()
+                    .ifPresentOrElse(
+                            updated -> advisories.put("updatedAt", updated.toString()),
+                            () -> advisories.putNull("updatedAt"));
+            advisories.put("stale", status.isStale());
+            status.warning()
+                    .ifPresentOrElse(
+                            warning -> advisories.put("warning", warning), () -> advisories.putNull("warning"));
+        });
         ArrayNode categories = root.putArray("categories");
         for (CategoryResult result : card.categories()) {
             ObjectNode category = categories.addObject();

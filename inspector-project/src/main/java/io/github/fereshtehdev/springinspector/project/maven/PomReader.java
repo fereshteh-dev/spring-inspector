@@ -43,7 +43,8 @@ final class PomReader {
                 child(project, "modules").stream()
                         .flatMap(modules -> children(modules, "module").stream())
                         .map(PomReader::text)
-                        .toList());
+                        .toList(),
+                coordinates(project));
     }
 
     private static Element parseDocument(String xml) {
@@ -128,7 +129,8 @@ final class PomReader {
         return new Coordinates(
                 childText(element, "groupId").orElse(""),
                 childText(element, "artifactId").orElse(""),
-                childText(element, "version"));
+                childText(element, "version"),
+                childText(element, "scope"));
     }
 
     private static Optional<Element> child(Element parent, String name) {

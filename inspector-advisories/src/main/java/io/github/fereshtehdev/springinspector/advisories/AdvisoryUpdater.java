@@ -65,6 +65,8 @@ public final class AdvisoryUpdater {
             return;
         }
         try {
+            // inspector:ignore security.weak-cryptography reason="compares the server's published MD5; HTTPS secures
+            // the download"
             byte[] actual = MessageDigest.getInstance("MD5").digest(response.body());
             if (!MessageDigest.isEqual(
                     actual, Base64.getDecoder().decode(response.md5().get()))) {

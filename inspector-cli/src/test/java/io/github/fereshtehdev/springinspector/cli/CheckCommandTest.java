@@ -2,8 +2,17 @@ package io.github.fereshtehdev.springinspector.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.fereshtehdev.springinspector.advisories.Advisory;
+import io.github.fereshtehdev.springinspector.advisories.AdvisoryDatabase;
+import io.github.fereshtehdev.springinspector.advisories.AdvisorySeverity;
+import io.github.fereshtehdev.springinspector.advisories.AdvisoryStore;
+import io.github.fereshtehdev.springinspector.advisories.AffectedRange;
 import io.github.fereshtehdev.springinspector.cli.CliRun.Result;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -200,5 +209,65 @@ class CheckCommandTest {
     @Test
     void printsItsVersion() {
         assertThat(cli.run("--version").out()).startsWith("spring-inspector ");
+    }
+
+    @Test
+    void reportsVulnerableDependenciesFromTheLocalAdvisories() {
+        new AdvisoryStore(cli.home().resolve("advisories"))
+                .save(new AdvisoryDatabase(
+                        List.of(new Advisory(
+                                "GHSA-jfh8-c2jp-5v3q",
+                                List.of("CVE-2021-44228"),
+                                "Remote code injection in Log4j",
+                                AdvisorySeverity.CRITICAL,
+                                List.of(new Advisory.AffectedPackage(
+                                        "org.apache.logging.log4j:log4j-core",
+                                        List.of(new AffectedRange(
+                                                Optional.of("2.0"), Optional.of("2.15.0"), Optional.empty())),
+                                        Set.of())))),
+                        new AdvisoryDatabase.Metadata(Instant.now(), Optional.empty())));
+        cli.write("pom.xml", """
+                <project>
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>demo</groupId>
+                    <artifactId>demo</artifactId>
+                    <version>1.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.logging.log4j</groupId>
+                            <artifactId>log4j-core</artifactId>
+                            <version>2.14.1</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """).stage();
+
+        Result result = cli.run("check");
+
+        assertThat(result.exitCode()).isEqualTo(ExitCodes.BLOCKED);
+        assertThat(result.out())
+                .contains("BLOCKER pom.xml:9  log4j-core 2.14.1 has a known critical vulnerability: CVE-2021-44228")
+                .contains("Vulnerability advisories from ");
+    }
+
+    @Test
+    void warnsWhenThereAreNoAdvisoriesToCheckDependenciesWith() {
+        cli.write(CLEAN, CLEAN_SOURCE).commit("initial");
+
+        Result result = cli.run("check", "--all");
+
+        assertThat(result.out()).contains("No vulnerability advisories on this machine");
+    }
+
+    @Test
+    void leavesAdvisoriesOutWhenTheRuleIsTurnedOff() {
+        cli.write("spring-inspector.yml", """
+                rules:
+                  disabled: [security.vulnerable-dependency]
+                """).write(CLEAN, CLEAN_SOURCE).commit("initial");
+
+        Result result = cli.run("check", "--all");
+
+        assertThat(result.out()).doesNotContain("advisories");
     }
 }

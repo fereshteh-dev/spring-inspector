@@ -1,10 +1,12 @@
 package io.github.fereshtehdev.springinspector.cli;
 
+import io.github.fereshtehdev.springinspector.advisories.VulnerableDependencyCheck;
 import io.github.fereshtehdev.springinspector.core.domain.RuleId;
 import io.github.fereshtehdev.springinspector.core.domain.change.ChangeScope;
 import io.github.fereshtehdev.springinspector.core.domain.project.DetectedProject;
 import io.github.fereshtehdev.springinspector.core.domain.project.InspectorConfig;
 import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
+import io.github.fereshtehdev.springinspector.core.domain.report.AdvisoryStatus;
 import io.github.fereshtehdev.springinspector.core.domain.report.ReportCard;
 import io.github.fereshtehdev.springinspector.core.engine.InspectionEngine;
 import io.github.fereshtehdev.springinspector.core.port.Check;
@@ -18,6 +20,7 @@ import io.github.fereshtehdev.springinspector.javamodel.cache.FindingCache;
 import io.github.fereshtehdev.springinspector.project.config.ConfigFileReader;
 import io.github.fereshtehdev.springinspector.project.config.LoadedConfig;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /** One inspection run, wired from the adapters: detect the project, collect changes, inspect, keep the cache. */
@@ -38,13 +42,20 @@ final class Inspector {
     private final List<Check> checks;
     private final Map<String, String> environment;
     private final InspectorHome home;
+    private final Supplier<Optional<Instant>> advisoriesUpdated;
     private final ConfigFileReader configReader = new ConfigFileReader();
 
-    Inspector(ProjectDetector detector, List<Check> checks, Map<String, String> environment, InspectorHome home) {
+    Inspector(
+            ProjectDetector detector,
+            List<Check> checks,
+            Map<String, String> environment,
+            InspectorHome home,
+            Supplier<Optional<Instant>> advisoriesUpdated) {
         this.detector = detector;
         this.checks = List.copyOf(checks);
         this.environment = Map.copyOf(environment);
         this.home = home;
+        this.advisoriesUpdated = advisoriesUpdated;
     }
 
     InspectionRun inspect(Path projectRoot, ChangeScope scope, boolean useCache, Optional<Path> configFile) {
@@ -71,6 +82,9 @@ final class Inspector {
         JavaModel model = new JavaModel(project, changes.sources(), cache);
         ReportCard report =
                 new InspectionEngine(checks).inspect(new InspectionInput(project, changes.changeSet(), model));
+        if (checksDependencies(loaded.config())) {
+            report = report.withAdvisories(new AdvisoryStatus(advisoriesUpdated.get(), Instant.now()));
+        }
         cache.save();
         List<String> warnings = new ArrayList<>(loaded.warnings());
         warnings.addAll(unknownRules(loaded));
@@ -81,6 +95,12 @@ final class Inspector {
                 model.unparseableFiles(),
                 loaded.file(),
                 warnings);
+    }
+
+    private boolean checksDependencies(InspectorConfig config) {
+        return checks.stream()
+                .anyMatch(check -> check.id().equals(VulnerableDependencyCheck.ID)
+                        && config.isEnabled(check.id(), check.category()));
     }
 
     /** Rule ids in the configuration that no check has, usually a typo that silently does nothing. */

@@ -21,6 +21,7 @@ final class VersionCatalog {
 
     private final Map<String, String> versions = new HashMap<>();
     private final List<Library> libraries = new ArrayList<>();
+    private final Map<String, Library> byAccessor = new HashMap<>();
     private final List<Plugin> plugins = new ArrayList<>();
 
     private VersionCatalog() {}
@@ -49,6 +50,16 @@ final class VersionCatalog {
         return List.copyOf(libraries);
     }
 
+    /** The library that {@code libs.<accessor>} refers to in a build script. */
+    Optional<Library> library(String accessor) {
+        return Optional.ofNullable(byAccessor.get(accessor(accessor)));
+    }
+
+    /** Gradle turns {@code -}, {@code _} and {@code .} in aliases into the same accessor separator. */
+    private static String accessor(String alias) {
+        return alias.replaceAll("[-_.]", ".");
+    }
+
     List<Plugin> plugins() {
         return List.copyOf(plugins);
     }
@@ -57,7 +68,11 @@ final class VersionCatalog {
         Map<String, String> fields = fields(value);
         switch (section) {
             case "versions" -> quoted(value).ifPresent(version -> versions.put(key, version));
-            case "libraries" -> library(value, fields).ifPresent(libraries::add);
+            case "libraries" ->
+                library(value, fields).ifPresent(library -> {
+                    libraries.add(library);
+                    byAccessor.put(accessor(key), library);
+                });
             case "plugins" -> plugin(value, fields).ifPresent(plugins::add);
             default -> {}
         }

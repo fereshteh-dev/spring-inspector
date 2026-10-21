@@ -10,6 +10,7 @@ import java.util.Optional;
  *
  * @param suppressed findings silenced by an {@code inspector:ignore} comment; they count towards neither score nor gate
  * @param suppressionsWithoutReason {@code inspector:ignore} comments that were not honoured because they give no reason
+ * @param advisories how current the vulnerability advisories were, when dependencies are checked
  */
 public record ReportCard(
         List<CategoryResult> categories,
@@ -17,7 +18,8 @@ public record ReportCard(
         GateDecision gate,
         List<CheckProblem> problems,
         List<SuppressedFinding> suppressed,
-        List<Location> suppressionsWithoutReason) {
+        List<Location> suppressionsWithoutReason,
+        Optional<AdvisoryStatus> advisories) {
 
     public ReportCard {
         categories = List.copyOf(categories);
@@ -26,8 +28,23 @@ public record ReportCard(
         suppressionsWithoutReason = List.copyOf(suppressionsWithoutReason);
     }
 
+    public ReportCard(
+            List<CategoryResult> categories,
+            Score score,
+            GateDecision gate,
+            List<CheckProblem> problems,
+            List<SuppressedFinding> suppressed,
+            List<Location> suppressionsWithoutReason) {
+        this(categories, score, gate, problems, suppressed, suppressionsWithoutReason, Optional.empty());
+    }
+
     public ReportCard(List<CategoryResult> categories, Score score, GateDecision gate, List<CheckProblem> problems) {
         this(categories, score, gate, problems, List.of(), List.of());
+    }
+
+    public ReportCard withAdvisories(AdvisoryStatus status) {
+        return new ReportCard(
+                categories, score, gate, problems, suppressed, suppressionsWithoutReason, Optional.of(status));
     }
 
     public Optional<CategoryResult> category(Category category) {

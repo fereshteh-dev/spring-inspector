@@ -2,8 +2,9 @@
 
 Offline-first code inspector for Java, Spring Boot and Spring AI projects.
 
-> **Status:** early development. The command line works with 50 rules across security, Spring Boot, Spring AI,
-> clean code and migration, and per-project settings; the advisory database and the web report are next.
+> **Status:** early development. The command line works with 51 rules across security, Spring Boot, Spring AI,
+> clean code and migration, offline checks for vulnerable dependencies, and per-project settings; an IntelliJ plugin
+> is next.
 
 Run it before every commit and get a report card covering security, Spring Boot rules,
 Spring AI rules, clean code and architecture. Every finding says what's wrong, why it
@@ -36,6 +37,12 @@ java -jar spring-inspector.jar update                      # download vulnerabil
 `update` downloads OSV's Maven advisories (which include the GitHub and Spring advisories) to
 `~/.spring-inspector/advisories`; later runs download only when they changed. It honours `HTTPS_PROXY`. The advisory
 data is published by OSV.dev and the GitHub Advisory Database (CC-BY 4.0) and is not part of this distribution.
+
+When a build file is part of the change (always with `--all`), `check` matches the project's libraries against these
+advisories: versions written in `pom.xml` or Gradle scripts, versions managed by parents and BOMs already in your local
+Maven or Gradle cache, and the libraries inside an application jar or war you have built in `target/` or `build/libs`.
+Nothing is downloaded and the build is never run. Every report shows the advisories' date and warns when they are
+more than 7 days old.
 
 ## Configuration
 

@@ -67,6 +67,11 @@ final class CliRun {
         return project;
     }
 
+    /** The per-user directory this run uses, also its {@code SPRING_INSPECTOR_HOME}. */
+    Path home() {
+        return home;
+    }
+
     CliRun launcher(Supplier<Optional<String>> launcher) {
         this.launcher = launcher;
         return this;

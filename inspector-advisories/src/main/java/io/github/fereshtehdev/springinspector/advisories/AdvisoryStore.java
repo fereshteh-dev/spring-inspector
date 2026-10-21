@@ -44,6 +44,17 @@ public final class AdvisoryStore {
         return directory.resolve(FILE_NAME);
     }
 
+    /** When the advisories were last updated, read cheaply from the file instead of loading it. */
+    public Optional<Instant> lastUpdated() {
+        try {
+            return Files.isRegularFile(file())
+                    ? Optional.of(Files.getLastModifiedTime(file()).toInstant())
+                    : Optional.empty();
+        } catch (IOException unreadable) {
+            return Optional.empty();
+        }
+    }
+
     public Optional<AdvisoryDatabase> load() {
         Path file = file();
         if (!Files.isRegularFile(file)) {

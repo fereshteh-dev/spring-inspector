@@ -10,7 +10,8 @@ record Pom(
         List<Coordinates> managedDependencies,
         List<Coordinates> dependencies,
         List<Plugin> plugins,
-        List<String> modules) {
+        List<String> modules,
+        Coordinates self) {
 
     Pom {
         properties = Map.copyOf(properties);
@@ -20,7 +21,32 @@ record Pom(
         modules = List.copyOf(modules);
     }
 
-    record Coordinates(String groupId, String artifactId, Optional<String> version) {
+    /** The project's own groupId and version, inherited from the parent when not declared. */
+    String groupId() {
+        return self.groupId().isEmpty() ? parent.map(Coordinates::groupId).orElse("") : self.groupId();
+    }
+
+    Optional<String> version() {
+        return self.version().or(() -> parent.flatMap(Coordinates::version));
+    }
+
+    /** Entries of {@code dependencyManagement} with {@code <scope>import</scope>}: BOMs whose versions apply here. */
+    List<Coordinates> importedBoms() {
+        return managedDependencies.stream()
+                .filter(dependency ->
+                        dependency.scope().filter("import"::equals).isPresent())
+                .toList();
+    }
+
+    record Coordinates(String groupId, String artifactId, Optional<String> version, Optional<String> scope) {
+
+        Coordinates(String groupId, String artifactId, Optional<String> version) {
+            this(groupId, artifactId, version, Optional.empty());
+        }
+
+        String key() {
+            return groupId + ":" + artifactId;
+        }
 
         boolean is(String group, String artifact) {
             return groupId.equals(group) && artifactId.equals(artifact);

@@ -70,7 +70,7 @@ public final class GradleDetector {
         List<Path> modules = modules(settings);
         List<String> scripts = new ArrayList<>(List.of(settings, buildScript(Path.of(""))));
         modules.forEach(module -> scripts.add(buildScript(module)));
-        Map<String, String> variables = variables(scripts);
+        Map<String, String> variables = variables(reader, scripts);
         VersionCatalog catalog = reader.read(CATALOG).map(VersionCatalog::parse).orElseGet(VersionCatalog::empty);
 
         VersionCandidates java = new VersionCandidates();
@@ -127,7 +127,8 @@ public final class GradleDetector {
         return List.copyOf(modules);
     }
 
-    private Map<String, String> variables(List<String> scripts) {
+    /** Values that build scripts can refer to: {@code gradle.properties} and simple assignments in the scripts. */
+    static Map<String, String> variables(BuildFileReader reader, List<String> scripts) {
         Map<String, String> variables = new HashMap<>();
         reader.read(PROPERTIES).ifPresent(text -> {
             Properties properties = new Properties();
@@ -149,7 +150,7 @@ public final class GradleDetector {
         return variables;
     }
 
-    private static Optional<String> resolve(String raw, Map<String, String> variables) {
+    static Optional<String> resolve(String raw, Map<String, String> variables) {
         String expression = raw.matches("\\w+") && !raw.matches("\\d.*") ? "${" + raw + "}" : raw;
         return Placeholders.resolveBracedOrBare(expression, variables);
     }

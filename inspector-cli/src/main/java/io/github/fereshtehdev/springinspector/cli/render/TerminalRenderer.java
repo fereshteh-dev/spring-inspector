@@ -6,6 +6,7 @@ import io.github.fereshtehdev.springinspector.core.domain.Finding;
 import io.github.fereshtehdev.springinspector.core.domain.Location;
 import io.github.fereshtehdev.springinspector.core.domain.Reference;
 import io.github.fereshtehdev.springinspector.core.domain.Severity;
+import io.github.fereshtehdev.springinspector.core.domain.report.AdvisoryStatus;
 import io.github.fereshtehdev.springinspector.core.domain.report.CategoryResult;
 import io.github.fereshtehdev.springinspector.core.domain.report.CheckProblem;
 import io.github.fereshtehdev.springinspector.core.domain.report.GateDecision;
@@ -14,6 +15,8 @@ import io.github.fereshtehdev.springinspector.core.domain.report.SeverityCounts;
 import io.github.fereshtehdev.springinspector.core.domain.report.SuppressedFinding;
 import io.github.fereshtehdev.springinspector.core.port.ReportRenderer;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -65,6 +68,9 @@ public final class TerminalRenderer implements ReportRenderer {
         for (CheckProblem problem : card.problems()) {
             out.append(style.paint("  " + style.symbol("⚠️ ", "! ") + Problems.describe(problem), Ansi.YELLOW))
                     .append('\n');
+        }
+        if (card.advisories().isPresent()) {
+            renderAdvisories(card.advisories().get(), out);
         }
         for (Location comment : card.suppressionsWithoutReason()) {
             out.append(style.paint(
@@ -120,6 +126,18 @@ public final class TerminalRenderer implements ReportRenderer {
                     .append("  ")
                     .append(finding.whatsWrong().description())
                     .append(finding.howToFix().patch().isPresent() ? style.paint("  [fix available]", Ansi.GREEN) : "")
+                    .append('\n');
+        }
+    }
+
+    private void renderAdvisories(AdvisoryStatus status, Appendable out) throws IOException {
+        Optional<String> warning = status.warning();
+        if (warning.isPresent()) {
+            out.append(style.paint("  " + style.symbol("⚠️ ", "! ") + warning.get(), Ansi.YELLOW))
+                    .append('\n');
+        } else if (status.updatedAt().isPresent()) {
+            LocalDate date = LocalDate.ofInstant(status.updatedAt().get(), ZoneOffset.UTC);
+            out.append(style.paint("  Vulnerability advisories from " + date, Ansi.DIM))
                     .append('\n');
         }
     }
@@ -209,7 +227,9 @@ public final class TerminalRenderer implements ReportRenderer {
 
     private void section(Appendable out, String title, String text) throws IOException {
         out.append(DETAIL_INDENT).append(style.paint(title, Ansi.BOLD)).append('\n');
-        out.append(DETAIL_INDENT).append(text).append('\n');
+        for (String line : text.split("\n", -1)) {
+            out.append(DETAIL_INDENT).append(line).append('\n');
+        }
     }
 
     private static String summary(SeverityCounts counts) {

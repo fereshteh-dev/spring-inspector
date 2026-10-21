@@ -2,14 +2,17 @@ package io.github.fereshtehdev.springinspector.cli;
 
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryStore;
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryUpdater;
+import io.github.fereshtehdev.springinspector.advisories.VulnerableDependencyCheck;
 import io.github.fereshtehdev.springinspector.cli.render.Style;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.git.HookInstaller;
 import io.github.fereshtehdev.springinspector.project.BuildFileProjectDetector;
+import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;
 import java.io.Console;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,10 +63,13 @@ public final class SpringInspector implements Runnable {
             PrintWriter out,
             PrintWriter err) {
         InspectorHome home = InspectorHome.from(environment, userHome);
-        Inspector inspector = new Inspector(new BuildFileProjectDetector(), checks(), environment, home);
+        AdvisoryStore advisories = new AdvisoryStore(home.advisories());
+        List<Check> checks = new ArrayList<>(checks());
+        checks.add(new VulnerableDependencyCheck(advisories, LocalRepository.forUser(userHome, environment)));
+        Inspector inspector =
+                new Inspector(new BuildFileProjectDetector(), checks, environment, home, advisories::lastUpdated);
         Supplier<Optional<String>> launcher = launcherOverride.orElse(() -> Launcher.current(home));
         String version = Version.current();
-        AdvisoryStore advisories = new AdvisoryStore(home.advisories());
         CommandLine commandLine = new CommandLine(new SpringInspector(err))
                 .addSubcommand(new CheckCommand(inspector, workingDirectory, style, version, out, err))
                 .addSubcommand(new InitCommand(workingDirectory, out, err))

@@ -23,6 +23,10 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>inspector-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>inspector-project</artifactId>
+        </dependency>
         <!-- Reads OSV's advisory JSON; Jackson 3 as managed by Spring Boot 4.1. Apache-2.0. -->
         <dependency>
             <groupId>tools.jackson.core</groupId>
