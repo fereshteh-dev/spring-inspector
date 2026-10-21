@@ -46,6 +46,10 @@
 
         <spring-boot.version>4.1.1</spring-boot.version>
         <spring-ai.version>2.0.1</spring-ai.version>
+        <!-- Spring Boot 4.1.1 manages Jackson 3.1.5, which has five published advisories fixed in 3.1.6 and 3.1.7
+             (GHSA-q4xh-88c3-wmh7, GHSA-cxp5-3px4-pw24, GHSA-wv8q-qhhj-9h54 and two moderate). Drop this override
+             once Spring Boot manages 3.1.7 or later. -->
+        <jackson-bom.version>3.1.7</jackson-bom.version>
         <archunit.version>1.5.1</archunit.version>
         <error-prone.version>2.50.0</error-prone.version>
         <nullaway.version>0.14.2</nullaway.version>
@@ -70,6 +74,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Before Spring Boot's BOM: the first import of a managed version wins. -->
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>

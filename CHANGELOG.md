@@ -2,6 +2,13 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
+## [0.1.1] - 2026-10-22
+
+### Security
+
+- Spring Inspector now uses Jackson 3.1.7. Spring Boot 4.1.1 manages Jackson 3.1.5, which has five published
+  advisories (three high), fixed in 3.1.6 and 3.1.7. Spring Inspector found them in its own build.
+
 ## [0.1.0] - 2026-10-22
 
 First public release.
