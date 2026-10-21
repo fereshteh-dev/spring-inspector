@@ -54,6 +54,30 @@ class HexagonalRulesTest {
     }
 
     @Test
+    void rejectsJavaModelClassUsingAThirdPartyLibrary() {
+        assertThatThrownBy(() -> HexagonalRules.javaModelDependsOnlyOnCoreAndTheParser(LEAKY_ROOT)
+                        .check(LEAKY_CLASSES))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("ThirdPartyModel");
+    }
+
+    @Test
+    void rejectsCheckUsingAThirdPartyLibrary() {
+        assertThatThrownBy(() -> HexagonalRules.checksDependOnlyOnCoreAndTheJavaModel(LEAKY_ROOT)
+                        .check(LEAKY_CLASSES))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("ThirdPartyCheck");
+    }
+
+    @Test
+    void rejectsCheckResolvingTypesThroughJavaParserDirectly() {
+        assertThatThrownBy(() -> HexagonalRules.checksResolveTypesOnlyThroughTheJavaModel(LEAKY_ROOT)
+                        .check(LEAKY_CLASSES))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("ResolvingCheck");
+    }
+
+    @Test
     void rejectsPackageWithoutNullMarked() {
         JavaClasses unmarked = new ClassFileImporter().importPackages(UNMARKED_ROOT);
 

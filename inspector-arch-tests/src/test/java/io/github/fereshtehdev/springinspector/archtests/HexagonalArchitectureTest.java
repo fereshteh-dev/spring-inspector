@@ -46,6 +46,21 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    void javaModelDependsOnlyOnCoreAndTheParser() {
+        HexagonalRules.javaModelDependsOnlyOnCoreAndTheParser(ROOT).check(PRODUCTION_CLASSES);
+    }
+
+    @Test
+    void checksDependOnlyOnCoreAndTheJavaModel() {
+        HexagonalRules.checksDependOnlyOnCoreAndTheJavaModel(ROOT).check(PRODUCTION_CLASSES);
+    }
+
+    @Test
+    void checksResolveTypesOnlyThroughTheJavaModel() {
+        HexagonalRules.checksResolveTypesOnlyThroughTheJavaModel(ROOT).check(PRODUCTION_CLASSES);
+    }
+
+    @Test
     void noModuleUsesJackson2() {
         nothingUsesJackson2(ROOT).check(PRODUCTION_CLASSES);
     }

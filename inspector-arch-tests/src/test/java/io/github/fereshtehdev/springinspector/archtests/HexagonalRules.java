@@ -6,13 +6,16 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.github.fereshtehdev.springinspector.core.port.Check;
+import java.util.Set;
 import org.jspecify.annotations.NullMarked;
 
 final class HexagonalRules {
@@ -28,6 +31,11 @@ final class HexagonalRules {
         "com.fasterxml.jackson.datatype..",
         "com.fasterxml.jackson.module.."
     };
+
+    private static final String JAVAPARSER = "com.github.javaparser..";
+
+    private static final Set<String> RESOLVING_METHODS =
+            Set.of("resolve", "calculateResolvedType", "toResolvedType", "convertToUsage", "solve", "solveType");
 
     private HexagonalRules() {}
 
@@ -77,6 +85,41 @@ final class HexagonalRules {
                 .because("checks are plugins and never call each other");
     }
 
+    static ArchRule javaModelDependsOnlyOnCoreAndTheParser(String root) {
+        return classes()
+                .that()
+                .resideInAPackage(root + ".javamodel..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..", "javax.crypto..", "org.jspecify..", JAVAPARSER, core(root), root + ".javamodel..")
+                .because("the Java model is the parser behind a stable API, with no framework in it (ADR-0001)");
+    }
+
+    static ArchRule checksDependOnlyOnCoreAndTheJavaModel(String root) {
+        return classes()
+                .that()
+                .resideInAPackage(root + ".rules..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..", "org.jspecify..", JAVAPARSER, core(root), root + ".javamodel..", root + ".rules..")
+                .because("checks read code through the Java model and report through core, nothing else");
+    }
+
+    static ArchRule checksResolveTypesOnlyThroughTheJavaModel(String root) {
+        return noClasses()
+                .that()
+                .resideInAPackage(root + ".rules..")
+                .should()
+                .callMethodWhere(DescribedPredicate.describe(
+                        "a JavaParser symbol resolution method",
+                        call -> call.getTargetOwner().getPackageName().startsWith("com.github.javaparser")
+                                && RESOLVING_METHODS.contains(call.getName())))
+                .because("JavaParser's resolver is not thread-safe; JavaFile serializes resolution and records what"
+                        + " each result depends on, which the finding cache relies on");
+    }
+
     static ArchRule nothingUsesJackson2(String root) {
         return noClasses()
                 .that()
@@ -101,7 +144,10 @@ final class HexagonalRules {
             public void check(JavaClass check, ConditionEvents events) {
                 for (Dependency dependency : check.getDirectDependenciesFromSelf()) {
                     JavaClass target = dependency.getTargetClass();
-                    if (!target.equals(check) && !target.isInterface() && target.isAssignableTo(Check.class)) {
+                    boolean runnableCheck = !target.isInterface()
+                            && !target.getModifiers().contains(JavaModifier.ABSTRACT)
+                            && target.isAssignableTo(Check.class);
+                    if (!target.equals(check) && runnableCheck) {
                         events.add(SimpleConditionEvent.violated(check, dependency.getDescription()));
                     }
                 }
