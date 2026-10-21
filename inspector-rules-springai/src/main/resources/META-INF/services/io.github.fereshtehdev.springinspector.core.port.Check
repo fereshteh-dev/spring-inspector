@@ -1,2 +1,5 @@
 io.github.fereshtehdev.springinspector.rules.springai.SystemPromptConcatenationCheck
 io.github.fereshtehdev.springinspector.rules.springai.SharedConversationIdCheck
+io.github.fereshtehdev.springinspector.rules.springai.DestructiveToolCheck
+io.github.fereshtehdev.springinspector.rules.springai.FullPromptLoggingCheck
+io.github.fereshtehdev.springinspector.rules.springai.LlmOutputToSinkCheck

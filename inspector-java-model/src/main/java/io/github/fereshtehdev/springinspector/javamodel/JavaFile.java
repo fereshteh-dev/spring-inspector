@@ -4,6 +4,7 @@ import com.github.javaparser.Position;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
@@ -103,29 +104,30 @@ public final class JavaFile {
     }
 
     /**
-     * Whether the declaration of a type carries an annotation, such as {@code jakarta.persistence.Entity}; empty when
-     * the type cannot be resolved, for example because it lives in a jar.
+     * The source declaration of a type from this project, such as an entity class; empty for JDK and library types and
+     * when the type cannot be resolved. The declaration is part of the project's parsed sources and must only be read.
      */
-    public Optional<Boolean> typeHasAnnotation(Type type, String qualifiedAnnotation) {
+    public Optional<TypeDeclaration<?>> declarationOf(Type type) {
         return resolver.resolve(recorder, () -> {
             ResolvedType resolved = type.resolve();
             if (!resolved.isReferenceType()) {
-                return false;
+                return null;
             }
-            // Read the annotation off the declaration's source and match it through that file's imports: resolving
-            // the annotation type itself would need its jar, which the project's sources do not include.
             return resolved.asReferenceType()
                     .getTypeDeclaration()
                     .flatMap(declaration -> declaration.toAst())
-                    .map(declaration -> declaration instanceof NodeWithAnnotations<?> annotated
-                            && declaration
-                                    .findCompilationUnit()
-                                    .map(unit -> annotated.getAnnotations().stream()
-                                            .anyMatch(annotation ->
-                                                    refersTo(unit, annotation.getNameAsString(), qualifiedAnnotation)))
-                                    .orElse(false))
-                    .orElse(false);
+                    .filter(node -> node instanceof TypeDeclaration<?>)
+                    .map(node -> (TypeDeclaration<?>) node)
+                    .orElse(null);
         });
+    }
+
+    /**
+     * Whether the declaration of a type carries an annotation, such as {@code jakarta.persistence.Entity}; empty when
+     * the type has no declaration in the project's sources.
+     */
+    public Optional<Boolean> typeHasAnnotation(Type type, String qualifiedAnnotation) {
+        return declarationOf(type).map(declaration -> hasAnnotation(declaration, qualifiedAnnotation));
     }
 
     /**
@@ -160,14 +162,31 @@ public final class JavaFile {
                 .orElse(packageName.isEmpty());
     }
 
+    /** An annotation on the node, matched through the imports of the file the node is declared in. */
     public Optional<AnnotationExpr> annotation(NodeWithAnnotations<?> node, String qualifiedName) {
+        CompilationUnit declaringUnit = ((Node) node).findCompilationUnit().orElse(unit());
         return node.getAnnotations().stream()
-                .filter(annotation -> refersTo(annotation.getNameAsString(), qualifiedName))
+                .filter(annotation -> refersTo(declaringUnit, annotation.getNameAsString(), qualifiedName))
                 .findFirst();
     }
 
     public boolean hasAnnotation(NodeWithAnnotations<?> node, String qualifiedName) {
         return annotation(node, qualifiedName).isPresent();
+    }
+
+    /** An edit adding {@code import qualifiedName;}, or empty when the name is already usable here. */
+    public Optional<TextEdit> addImport(String qualifiedName) {
+        int lastDot = qualifiedName.lastIndexOf('.');
+        if (refersTo(qualifiedName.substring(lastDot + 1), qualifiedName)) {
+            return Optional.empty();
+        }
+        String declaration = "import " + qualifiedName + ";" + lineSeparator();
+        if (!unit().getImports().isEmpty()) {
+            return Optional.of(insertBefore(unit().getImports().get(0), declaration));
+        }
+        return Optional.of(unit().getPackageDeclaration()
+                .map(packageDeclaration -> insertAfterLine(packageDeclaration, lineSeparator() + declaration))
+                .orElseGet(() -> TextEdit.insert(0, declaration)));
     }
 
     public TextEdit replace(Node node, String replacement) {

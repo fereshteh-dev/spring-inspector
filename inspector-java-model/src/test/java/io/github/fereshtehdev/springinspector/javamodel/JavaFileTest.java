@@ -82,6 +82,26 @@ class JavaFileTest {
     }
 
     @Test
+    void addsAnImportOnlyWhenTheNameIsNotUsableYet() {
+        assertThat(applied(file.addImport("java.util.List").orElseThrow()))
+                .contains("import java.util.List;\nimport org.springframework.beans.factory.annotation.Autowired;");
+        assertThat(file.addImport("org.springframework.beans.factory.annotation.Autowired"))
+                .isEmpty();
+        assertThat(file.addImport("org.springframework.stereotype.Component")).isEmpty();
+        assertThat(file.addImport("java.lang.Math")).isEmpty();
+        JavaFile withoutImports = parse("package com.acme;\n\nclass A {}\n");
+        assertThat(Patches.apply(
+                        "package com.acme;\n\nclass A {}\n",
+                        List.of(withoutImports.addImport("java.util.List").orElseThrow())))
+                .isEqualTo("package com.acme;\n\nimport java.util.List;\n\nclass A {}\n");
+        JavaFile defaultPackage = parse("class A {}\n");
+        assertThat(Patches.apply(
+                        "class A {}\n",
+                        List.of(defaultPackage.addImport("java.util.List").orElseThrow())))
+                .isEqualTo("import java.util.List;\nclass A {}\n");
+    }
+
+    @Test
     void javaLangNeedsNoImport() {
         assertThat(file.refersTo("Math", "java.lang.Math")).isTrue();
         assertThat(file.refersTo("Math", "org.example.Math")).isFalse();

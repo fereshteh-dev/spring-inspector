@@ -1,2 +1,14 @@
 io.github.fereshtehdev.springinspector.rules.spring.FieldInjectionCheck
 io.github.fereshtehdev.springinspector.rules.spring.Jackson2InBoot4Check
+io.github.fereshtehdev.springinspector.rules.spring.AutowiredConstructorCheck
+io.github.fereshtehdev.springinspector.rules.spring.TransactionalNotProxiedCheck
+io.github.fereshtehdev.springinspector.rules.spring.TransactionalSelfInvocationCheck
+io.github.fereshtehdev.springinspector.rules.spring.TransactionalReadOnlyCheck
+io.github.fereshtehdev.springinspector.rules.spring.EntityInControllerCheck
+io.github.fereshtehdev.springinspector.rules.spring.MissingValidCheck
+io.github.fereshtehdev.springinspector.rules.spring.FindAllWithoutPagingCheck
+io.github.fereshtehdev.springinspector.rules.spring.NPlusOneCheck
+io.github.fereshtehdev.springinspector.rules.spring.BlockingInReactiveCheck
+io.github.fereshtehdev.springinspector.rules.spring.VirtualThreadPinningCheck
+io.github.fereshtehdev.springinspector.rules.spring.RestTemplateCheck
+io.github.fereshtehdev.springinspector.rules.spring.ValueSprawlCheck

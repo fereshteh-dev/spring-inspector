@@ -185,6 +185,16 @@ class JavaModelTest {
         assertThat(findings)
                 .extracting(finding -> finding.whatsWrong().description())
                 .containsExactly("order=true", "greeter=false", "external=?");
+        ScriptedCheck declarations = new ScriptedCheck(
+                "declarations",
+                file -> file.unit().findAll(com.github.javaparser.ast.body.Parameter.class).stream()
+                        .map(parameter -> file.declarationOf(parameter.getType())
+                                .map(declaration -> declaration.getNameAsString())
+                                .orElse("?"))
+                        .toList());
+        assertThat(run(new JavaModel(PROJECT, sources), declarations, APP))
+                .extracting(finding -> finding.whatsWrong().description())
+                .containsExactly("Order", "Greeter", "?");
     }
 
     @Test

@@ -113,25 +113,7 @@ public final class InsecureRandomCheck extends JavaCheck {
     private static Patch secureRandomPatch(JavaFile file, ObjectCreationExpr creation) {
         List<TextEdit> edits = new ArrayList<>();
         edits.add(file.replace(creation, "new SecureRandom()"));
-        boolean imported = file.unit().getImports().stream()
-                .anyMatch(declaration -> declaration.getNameAsString().equals("java.security.SecureRandom")
-                        || (declaration.isAsterisk()
-                                && declaration.getNameAsString().equals("java.security")));
-        if (!imported) {
-            edits.add(
-                    file.unit().getImports().isEmpty()
-                            ? file.unit()
-                                    .getPackageDeclaration()
-                                    .map(declaration -> file.insertAfterLine(
-                                            declaration,
-                                            file.lineSeparator() + "import java.security.SecureRandom;"
-                                                    + file.lineSeparator()))
-                                    .orElseGet(() -> TextEdit.insert(
-                                            0, "import java.security.SecureRandom;" + file.lineSeparator()))
-                            : file.insertBefore(
-                                    file.unit().getImports().get(0),
-                                    "import java.security.SecureRandom;" + file.lineSeparator()));
-        }
+        file.addImport("java.security.SecureRandom").ifPresent(edits::add);
         return file.patch(edits);
     }
 }
