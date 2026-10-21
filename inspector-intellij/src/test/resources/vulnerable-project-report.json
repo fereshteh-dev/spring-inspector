@@ -1,0 +1,135 @@
+{
+  "tool" : {
+    "name" : "spring-inspector",
+    "version" : "0.1.0-SNAPSHOT"
+  },
+  "score" : 60,
+  "gate" : {
+    "blocks" : true,
+    "reasons" : [ "BLOCKER security.vulnerable-dependency at pom.xml:17", "BLOCKER security.vulnerable-dependency at pom.xml:21" ]
+  },
+  "advisories" : {
+    "updatedAt" : "2026-10-21T14:59:44.917876200Z",
+    "stale" : false,
+    "warning" : null
+  },
+  "categories" : [ {
+    "category" : "security",
+    "status" : "FAILED",
+    "counts" : {
+      "blocker" : 2,
+      "major" : 0,
+      "minor" : 0,
+      "info" : 1
+    },
+    "hiddenFindings" : 0,
+    "findings" : [ {
+      "ruleId" : "security.vulnerable-dependency",
+      "severity" : "BLOCKER",
+      "confidence" : "HIGH",
+      "source" : "ADVISORY",
+      "file" : "pom.xml",
+      "startLine" : 17,
+      "endLine" : 17,
+      "whatsWrong" : "spring-boot-starter-web 2.5.0 has a known critical vulnerability: CVE-2022-22965",
+      "snippet" : "            <artifactId>spring-boot-starter-web</artifactId>",
+      "whyItMatters" : "Attackers look for applications that ship libraries with published vulnerabilities, because the details of how to exploit them are public.\n- CVE-2022-22965 (critical): Remote Code Execution in Spring Framework\nThe version comes from spring-boot-starter-parent 2.5.0.",
+      "references" : [ {
+        "label" : "GHSA-36p3-wjmg-h94x",
+        "url" : "https://osv.dev/vulnerability/GHSA-36p3-wjmg-h94x"
+      } ],
+      "howToFix" : "Upgrade spring-boot-starter-parent 2.5.0 to a release that brings spring-boot-starter-web 2.5.12 or later, or set the version yourself (Maven: dependencyManagement; Gradle: a constraint).",
+      "patch" : null
+    }, {
+      "ruleId" : "security.vulnerable-dependency",
+      "severity" : "BLOCKER",
+      "confidence" : "HIGH",
+      "source" : "ADVISORY",
+      "file" : "pom.xml",
+      "startLine" : 21,
+      "endLine" : 21,
+      "whatsWrong" : "log4j-core 2.14.1 has 7 known vulnerabilities (2 critical, 1 high, 4 moderate)",
+      "snippet" : "            <artifactId>log4j-core</artifactId>",
+      "whyItMatters" : "Attackers look for applications that ship libraries with published vulnerabilities, because the details of how to exploit them are public.\n- CVE-2021-45046 (critical): Incomplete fix for Apache Log4j vulnerability\n- CVE-2021-44228 (critical): Remote code injection in Log4j\n- CVE-2021-45105 (high): Apache Log4j2 vulnerable to Improper Input Validation and Uncontrolled Recursion\n- CVE-2026-34480 (moderate): Apache Log4j Core: Silent log event loss in XmlLayout due to unescaped XML 1.0 forbidden characters\n- CVE-2026-34477 (moderate): Apache Log4j Core: `verifyHostName` attribute silently ignored in TLS configuration\n- and 2 more",
+      "references" : [ {
+        "label" : "GHSA-7rjr-3q55-vv33",
+        "url" : "https://osv.dev/vulnerability/GHSA-7rjr-3q55-vv33"
+      }, {
+        "label" : "GHSA-jfh8-c2jp-5v3q",
+        "url" : "https://osv.dev/vulnerability/GHSA-jfh8-c2jp-5v3q"
+      }, {
+        "label" : "GHSA-p6xc-xr62-6r2g",
+        "url" : "https://osv.dev/vulnerability/GHSA-p6xc-xr62-6r2g"
+      }, {
+        "label" : "GHSA-3pxv-7cmr-fjr4",
+        "url" : "https://osv.dev/vulnerability/GHSA-3pxv-7cmr-fjr4"
+      }, {
+        "label" : "GHSA-6hg6-v5c8-fphq",
+        "url" : "https://osv.dev/vulnerability/GHSA-6hg6-v5c8-fphq"
+      } ],
+      "howToFix" : "Upgrade to log4j-core 2.25.4 or later.",
+      "patch" : null
+    }, {
+      "ruleId" : "security.vulnerable-dependency",
+      "severity" : "INFO",
+      "confidence" : "HIGH",
+      "source" : "ADVISORY",
+      "file" : "pom.xml",
+      "startLine" : 26,
+      "endLine" : 26,
+      "whatsWrong" : "1 library was not checked for vulnerabilities: com.example:mystery",
+      "snippet" : "            <artifactId>mystery</artifactId>",
+      "whyItMatters" : "Their versions could not be worked out without running the build; for example, com.example:mystery: its version comes from a parent or BOM that is not in the local Maven or Gradle cache.",
+      "references" : [ ],
+      "howToFix" : "Build the project once (so its BOMs and parents are in the local cache, or its application archive exists), or write the versions in the build file.",
+      "patch" : null
+    } ]
+  }, {
+    "category" : "spring-boot",
+    "status" : "PASSED",
+    "counts" : {
+      "blocker" : 0,
+      "major" : 0,
+      "minor" : 0,
+      "info" : 0
+    },
+    "hiddenFindings" : 0,
+    "findings" : [ ]
+  }, {
+    "category" : "spring-ai",
+    "status" : "PASSED",
+    "counts" : {
+      "blocker" : 0,
+      "major" : 0,
+      "minor" : 0,
+      "info" : 0
+    },
+    "hiddenFindings" : 0,
+    "findings" : [ ]
+  }, {
+    "category" : "clean-code",
+    "status" : "PASSED",
+    "counts" : {
+      "blocker" : 0,
+      "major" : 0,
+      "minor" : 0,
+      "info" : 0
+    },
+    "hiddenFindings" : 0,
+    "findings" : [ ]
+  }, {
+    "category" : "migration",
+    "status" : "PASSED",
+    "counts" : {
+      "blocker" : 0,
+      "major" : 0,
+      "minor" : 0,
+      "info" : 0
+    },
+    "hiddenFindings" : 0,
+    "findings" : [ ]
+  } ],
+  "suppressed" : [ ],
+  "suppressionsWithoutReason" : [ ],
+  "problems" : [ ]
+}

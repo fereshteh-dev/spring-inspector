@@ -34,3 +34,9 @@ target/
 ### IntelliJ (project files are regenerated from the Maven model) ###
 .idea/
 *.iml
+
+### Gradle (IntelliJ plugin) ###
+inspector-intellij/build/
+inspector-intellij/.gradle/
+inspector-intellij/.intellijPlatform/
+inspector-intellij/.kotlin/

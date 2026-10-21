@@ -3,8 +3,8 @@
 Offline-first code inspector for Java, Spring Boot and Spring AI projects.
 
 > **Status:** early development. The command line works with 51 rules across security, Spring Boot, Spring AI,
-> clean code and migration, offline checks for vulnerable dependencies, and per-project settings; an IntelliJ plugin
-> is next.
+> clean code and migration, offline checks for vulnerable dependencies, and per-project settings, from the command
+> line or from an IntelliJ plugin.
 
 Run it before every commit and get a report card covering security, Spring Boot rules,
 Spring AI rules, clean code and architecture. Every finding says what's wrong, why it
@@ -62,6 +62,26 @@ still appear in the report (and as suppressed results in SARIF), so reviews can 
 `check` exits with 1 when the gate blocks (a BLOCKER finding by default), 2 for a usage error and 3 if the tool
 itself fails. Results are cached per file in `.spring-inspector/cache`, signed with a key in `~/.spring-inspector`,
 so unchanged files are not inspected again.
+
+## IntelliJ plugin
+
+The plugin shows the same report card inside IntelliJ IDEA and the other JetBrains IDEs (2025.1 or newer).
+
+Build it after the command line, from the repository root:
+
+```shell
+./mvnw package
+cd inspector-intellij
+./gradlew buildPlugin        # add -PlocalIde=<path to an installed IDE> to compile against it instead of downloading one
+```
+
+Install `inspector-intellij/build/distributions/spring-inspector-intellij-<version>.zip` with
+*Settings | Plugins | ⚙ | Install Plugin from Disk…*, then open the **Spring Inspector** tool window (or
+*Tools | Inspect Project with Spring Inspector*) and run it on the whole project or on your staged changes.
+Double-click a finding to open it in the editor.
+
+The inspector needs Java 25 or newer. IntelliJ IDEA 2026.2 already runs on it; for older IDEs, choose a Java 25
+installation in *Settings | Tools | Spring Inspector*.
 
 ## Documentation
 

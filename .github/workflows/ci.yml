@@ -53,3 +53,22 @@ jobs:
           name: jacoco
           path: '**/target/site/jacoco/'
           if-no-files-found: ignore
+
+  plugin:
+    name: IntelliJ plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build the command line the plugin bundles
+        run: ./mvnw -B -ntp package -DskipTests -Djacoco.check.skip=true
+
+      - name: Test and package the plugin
+        working-directory: inspector-intellij
+        run: ./gradlew --no-daemon test buildPlugin verifyPluginStructure

@@ -1,0 +1,44 @@
+<idea-plugin>
+    <id>io.github.fereshtehdev.spring-inspector</id>
+    <name>Spring Inspector</name>
+    <vendor url="https://github.com/fereshteh-dev/spring-inspector">fereshteh-dev</vendor>
+
+    <description><![CDATA[
+    <p>Offline code inspector for Java, Spring Boot and Spring AI projects.</p>
+    <p>Gives your project a report card covering security, Spring Boot and Spring AI rules, clean code,
+    migrations and vulnerable dependencies. Every finding says what is wrong, why it matters and how to fix it.</p>
+    <ul>
+      <li>Run it on the whole project or on your staged changes from the <b>Spring Inspector</b> tool window,
+          or with <b>Tools | Inspect Project with Spring Inspector</b>.</li>
+      <li>Double-click a finding to open it in the editor.</li>
+      <li>Your code never leaves your machine: the inspector runs locally, in its own process.</li>
+    </ul>
+    <p>Needs Java 25 or newer to run the inspector: the IDE's own Java when it is new enough, or one you choose
+    in <b>Settings | Tools | Spring Inspector</b>.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Spring Inspector"
+                    anchor="bottom"
+                    icon="AllIcons.Toolwindows.ToolWindowInspection"
+                    factoryClass="io.github.fereshtehdev.springinspector.intellij.ui.InspectorToolWindowFactory"/>
+        <applicationService serviceImplementation="io.github.fereshtehdev.springinspector.intellij.settings.InspectorSettings"/>
+        <applicationConfigurable parentId="tools"
+                                 id="io.github.fereshtehdev.spring-inspector.settings"
+                                 displayName="Spring Inspector"
+                                 instance="io.github.fereshtehdev.springinspector.intellij.settings.InspectorConfigurable"/>
+        <notificationGroup id="Spring Inspector" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action id="io.github.fereshtehdev.spring-inspector.run"
+                class="io.github.fereshtehdev.springinspector.intellij.ui.RunInspectionAction"
+                text="Inspect Project with Spring Inspector"
+                description="Runs Spring Inspector on the whole project and shows its report card"
+                icon="AllIcons.Toolwindows.ToolWindowInspection">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
