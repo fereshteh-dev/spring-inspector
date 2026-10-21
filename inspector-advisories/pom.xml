@@ -14,10 +14,19 @@
     <name>Spring Inspector :: Advisories</name>
     <description>Offline vulnerability advisory store and sync.</description>
 
+    <properties>
+        <jacoco.check.skip>false</jacoco.check.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>inspector-core</artifactId>
+        </dependency>
+        <!-- Reads OSV's advisory JSON; Jackson 3 as managed by Spring Boot 4.1. Apache-2.0. -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
     </dependencies>
 </project>

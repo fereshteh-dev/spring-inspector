@@ -30,7 +30,12 @@ java -jar spring-inspector.jar check --all                 # the whole project
 java -jar spring-inspector.jar check --details security    # why it matters and how to fix it
 java -jar spring-inspector.jar check --format sarif        # also: json
 java -jar spring-inspector.jar install-hook                # check every commit; skip once with --no-verify
+java -jar spring-inspector.jar update                      # download vulnerability advisories for offline use
 ```
+
+`update` downloads OSV's Maven advisories (which include the GitHub and Spring advisories) to
+`~/.spring-inspector/advisories`; later runs download only when they changed. It honours `HTTPS_PROXY`. The advisory
+data is published by OSV.dev and the GitHub Advisory Database (CC-BY 4.0) and is not part of this distribution.
 
 ## Configuration
 

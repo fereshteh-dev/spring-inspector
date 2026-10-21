@@ -20,4 +20,9 @@ record InspectorHome(Path directory) {
     Path cacheKey() {
         return directory.resolve("cache.key");
     }
+
+    /** The offline vulnerability advisories, shared by every project on this machine. */
+    Path advisories() {
+        return directory.resolve("advisories");
+    }
 }

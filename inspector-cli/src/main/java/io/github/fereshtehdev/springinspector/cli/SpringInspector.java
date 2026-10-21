@@ -1,5 +1,7 @@
 package io.github.fereshtehdev.springinspector.cli;
 
+import io.github.fereshtehdev.springinspector.advisories.AdvisoryStore;
+import io.github.fereshtehdev.springinspector.advisories.AdvisoryUpdater;
 import io.github.fereshtehdev.springinspector.cli.render.Style;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.git.HookInstaller;
@@ -61,9 +63,12 @@ public final class SpringInspector implements Runnable {
         Inspector inspector = new Inspector(new BuildFileProjectDetector(), checks(), environment, home);
         Supplier<Optional<String>> launcher = launcherOverride.orElse(() -> Launcher.current(home));
         String version = Version.current();
+        AdvisoryStore advisories = new AdvisoryStore(home.advisories());
         CommandLine commandLine = new CommandLine(new SpringInspector(err))
                 .addSubcommand(new CheckCommand(inspector, workingDirectory, style, version, out, err))
                 .addSubcommand(new InitCommand(workingDirectory, out, err))
+                .addSubcommand(new UpdateCommand(
+                        () -> new AdvisoryUpdater(advisories, environment).update(), advisories.file(), out, err))
                 .addSubcommand(
                         new InstallHookCommand(new HookInstaller(environment), launcher, workingDirectory, out, err))
                 .setCaseInsensitiveEnumValuesAllowed(true)
