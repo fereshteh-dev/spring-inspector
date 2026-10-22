@@ -90,7 +90,7 @@ jobs:
         run: |
           summary=$(grep -E "Plugin .* against|Compatibility problems|problem|Exception|error|FAILED|What went wrong" verify-plugin.log | head -40)
           echo "::error title=Plugin Verifier::${summary//$'\n'/%0A}"
-          find build/reports/pluginVerifier -name '*.md' -print0 2>/dev/null | xargs -0 -r cat | head -80 > problems.txt || true
+          find build/reports/pluginVerifier -type f \( -name '*.md' -o -name '*.txt' \) -print0 2>/dev/null | xargs -0 -r cat | head -80 > problems.txt || true
           if [ -s problems.txt ]; then
             content=$(cat problems.txt)
             echo "::error title=Verifier report::${content//$'\n'/%0A}"

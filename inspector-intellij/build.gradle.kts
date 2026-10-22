@@ -69,6 +69,36 @@ intellijPlatform {
         }
     }
     pluginConfiguration {
+        changeNotes = providers.fileContents(layout.projectDirectory.file("../CHANGELOG.md")).asText.map { changelog ->
+            // The newest section of CHANGELOG.md as simple HTML. Kept inside the lambda for the configuration cache.
+            fun escape(text: String) = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("**", "").replace("`", "")
+            val section = changelog.substringAfter("\n## ", "").substringBefore("\n## ")
+            val html = StringBuilder()
+            var inList = false
+            for (raw in section.lines().drop(1)) {
+                val line = raw.trim()
+                val item = line.startsWith("- ")
+                val continuation = raw.startsWith("  ") && inList
+                if (inList && (item || !continuation)) html.append("</li>")
+                if (inList && !item && !continuation) {
+                    html.append("</ul>")
+                    inList = false
+                }
+                when {
+                    line.startsWith("### ") -> html.append("<h3>").append(escape(line.removePrefix("### "))).append("</h3>")
+                    item -> {
+                        if (!inList) html.append("<ul>")
+                        inList = true
+                        html.append("<li>").append(escape(line.removePrefix("- ")))
+                    }
+                    continuation -> html.append(" ").append(escape(line))
+                    line.isNotEmpty() -> html.append("<p>").append(escape(line)).append("</p>")
+                }
+            }
+            if (inList) html.append("</li></ul>")
+            html.toString()
+        }
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
             untilBuild = provider { null }

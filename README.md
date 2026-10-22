@@ -130,7 +130,7 @@ IntelliJ plugin. Next come the JetBrains Marketplace, architecture rules, and pu
 - [User guide](docs/user-guide.md): installation, commands, configuration, CI, troubleshooting
 - [Rule catalogue](docs/rules/README.md)
 - [Specification](docs/SPEC.md) and [architecture decisions](docs/adr/README.md)
-- [Contributing](CONTRIBUTING.md) and [security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md), [releasing](docs/releasing.md) and [security policy](SECURITY.md)
 
 ## Licence
 

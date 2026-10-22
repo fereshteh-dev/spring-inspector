@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -50,6 +51,21 @@ class RunTest {
         assertThatThrownBy(() -> new InspectorCommand(
                         Path.of("java"), Path.of("cli.jar"), Path.of("project"), InspectionScope.FILES, List.of()))
                 .hasMessageContaining("Name the files");
+    }
+
+    @Test
+    void passesLongFileListsThroughAnArgumentFile() {
+        InspectorCommand command = new InspectorCommand(
+                Path.of("java"),
+                Path.of("cli.jar"),
+                Path.of("project"),
+                InspectionScope.FILES,
+                List.of(Path.of("src", "My File.java"), Path.of("pom.xml")));
+
+        assertThat(command.arguments(Optional.of(Path.of("files.txt"))))
+                .endsWith("--files", "@files.txt")
+                .doesNotContain("pom.xml");
+        assertThat(command.argumentFileContent()).isEqualTo("\"src/My File.java\"\n\"pom.xml\"\n");
     }
 
     @Test

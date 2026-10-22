@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -111,8 +112,49 @@ class BundledCommandLineTest {
         });
     }
 
+    @Test
+    void readsLongFileListsFromAnArgumentFile() throws IOException, InterruptedException {
+        assumeTrue(Files.isRegularFile(JAR), "build the command line first with ./mvnw package");
+        assumeTrue(Runtime.version().feature() >= JavaRuntimes.REQUIRED_FEATURE, "needs Java 25 to run the jar");
+        Path project = Files.createDirectories(temp.resolve("project"));
+        Files.writeString(project.resolve("pom.xml"), "<project><modelVersion>4.0.0</modelVersion></project>");
+        Path folder = Files.createDirectories(project.resolve("src/main/java/my demo"));
+        Files.writeString(folder.resolve("Clean.java"), "package demo;\n\nclass Clean {}\n");
+        Files.writeString(folder.resolve("Swallow.java"), """
+                package demo;
+
+                class Swallow {
+                    void run() {
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                }
+                """);
+        InspectorCommand command = new InspectorCommand(
+                java(),
+                JAR.toAbsolutePath(),
+                project,
+                InspectionScope.FILES,
+                List.of(Path.of("src/main/java/my demo/Clean.java"), Path.of("src/main/java/my demo/Swallow.java")));
+        Path argumentFile = Files.writeString(temp.resolve("files.txt"), command.argumentFileContent());
+
+        RunOutcome outcome = run(command, Optional.of(argumentFile));
+
+        assertThat(outcome).isInstanceOfSatisfying(RunOutcome.Completed.class, completed -> assertThat(
+                        completed.report().categories().stream()
+                                .flatMap(category -> category.findings().stream()))
+                .anySatisfy(finding -> assertThat(finding.file()).isEqualTo("src/main/java/my demo/Swallow.java")));
+    }
+
     private RunOutcome run(InspectorCommand command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(command.arguments())
+        return run(command, Optional.empty());
+    }
+
+    private RunOutcome run(InspectorCommand command, Optional<Path> argumentFile)
+            throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(command.arguments(argumentFile))
                 .directory(command.project().toFile())
                 .redirectError(temp.resolve("stderr.txt").toFile())
                 .start();

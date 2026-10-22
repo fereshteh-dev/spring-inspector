@@ -12,6 +12,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
     steps:
       - uses: actions/checkout@v7
 
@@ -36,6 +38,13 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           ./gradlew --no-daemon -PpluginVersion="$VERSION" test buildPlugin verifyPluginStructure verifyPlugin
+
+      # Needs the repository secret PUBLISH_TOKEN, a JetBrains Marketplace token (see docs/releasing.md).
+      # Without it, the plugin is published on GitHub only.
+      - name: Publish the plugin to the JetBrains Marketplace
+        if: env.PUBLISH_TOKEN != ''
+        working-directory: inspector-intellij
+        run: ./gradlew --no-daemon -PpluginVersion="$VERSION" publishPlugin
 
       - name: Publish the release
         env:

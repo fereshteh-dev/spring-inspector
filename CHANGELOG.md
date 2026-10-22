@@ -11,9 +11,12 @@ All notable changes are listed here. The project follows [semantic versioning](h
 - IntelliJ: **Alt+Enter → Apply Spring Inspector fix** applies a finding's patch after a preview, only if the code
   is unchanged since the run.
 - IntelliJ: commits made from the IDE are inspected first, with Review / Commit Anyway / Cancel when the gate blocks.
-- IntelliJ: **Inspect Current File**.
+- IntelliJ: **Inspect Current File**, and **Inspect with Spring Inspector** for files and folders in the project view
+  and the editor's right-click menu.
+- IntelliJ: plugin icon, "What's new" notes, and the commit check in Settings → Tools → Spring Inspector.
 - Command line: `check --files <file>...` reviews whole files, also outside git.
-- CI checks the plugin with JetBrains' Plugin Verifier against IntelliJ IDEA 2025.1, 2025.2 and 2026.2.
+- CI checks the plugin with JetBrains' Plugin Verifier against IntelliJ IDEA 2025.1, 2025.2 and 2026.2, and releases
+  can publish to the JetBrains Marketplace ([docs/releasing.md](docs/releasing.md)).
 
 ## [0.1.1] - 2026-10-22
 

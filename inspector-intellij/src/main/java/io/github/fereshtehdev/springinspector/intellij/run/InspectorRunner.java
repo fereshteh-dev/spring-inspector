@@ -4,12 +4,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import io.github.fereshtehdev.springinspector.intellij.settings.InspectorSettings;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +19,6 @@ import java.util.Optional;
 /** Runs the bundled command line on the project in a separate process and reads its report. */
 public final class InspectorRunner {
 
-    public static final PluginId PLUGIN_ID = PluginId.getId("io.github.fereshtehdev.spring-inspector");
     static final Duration TIMEOUT = Duration.ofMinutes(10);
 
     private InspectorRunner() {}
@@ -40,11 +38,16 @@ public final class InspectorRunner {
         if (jar.isEmpty()) {
             return new RunOutcome.Failed("The plugin is incomplete: cli/spring-inspector.jar is missing. Reinstall it.");
         }
-        GeneralCommandLine command = new GeneralCommandLine(
-                        new InspectorCommand(java.get(), jar.get(), project, scope, files).arguments())
-                .withWorkDirectory(project.toFile())
-                .withCharset(StandardCharsets.UTF_8);
+        InspectorCommand inspector = new InspectorCommand(java.get(), jar.get(), project, scope, files);
+        Optional<Path> argumentFile = Optional.empty();
         try {
+            if (files.size() > InspectorCommand.MAX_FILES_ON_COMMAND_LINE) {
+                argumentFile = Optional.of(Files.createTempFile("spring-inspector-files", ".txt"));
+                Files.writeString(argumentFile.get(), inspector.argumentFileContent(), StandardCharsets.UTF_8);
+            }
+            GeneralCommandLine command = new GeneralCommandLine(inspector.arguments(argumentFile))
+                    .withWorkDirectory(project.toFile())
+                    .withCharset(StandardCharsets.UTF_8);
             ProcessOutput output = new CapturingProcessHandler(command)
                     .runProcessWithProgressIndicator(indicator, (int) TIMEOUT.toMillis());
             if (output.isCancelled()) {
@@ -55,17 +58,30 @@ public final class InspectorRunner {
                         + " minutes and was stopped.");
             }
             return RunOutcome.of(output.getExitCode(), output.getStdout(), output.getStderr());
-        } catch (ExecutionException e) {
+        } catch (ExecutionException | IOException e) {
             return new RunOutcome.Failed("Spring Inspector could not be started: " + e.getMessage());
+        } finally {
+            argumentFile.ifPresent(InspectorRunner::deleteQuietly);
         }
     }
 
+    private static void deleteQuietly(Path file) {
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException ignored) {
+            file.toFile().deleteOnExit();
+        }
+    }
+
+    /** The jar in the plugin's {@code cli} folder, next to the {@code lib} folder that holds this class's jar. */
     private static Optional<Path> bundledJar() {
-        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PLUGIN_ID);
+        String ownJar = PathManager.getJarPathForClass(InspectorRunner.class);
+        Path lib = ownJar == null ? null : Path.of(ownJar).getParent();
+        Path plugin = lib == null ? null : lib.getParent();
         if (plugin == null) {
             return Optional.empty();
         }
-        Path jar = plugin.getPluginPath().resolve("cli").resolve("spring-inspector.jar");
+        Path jar = plugin.resolve("cli").resolve("spring-inspector.jar");
         return Files.isRegularFile(jar) ? Optional.of(jar) : Optional.empty();
     }
 }

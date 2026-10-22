@@ -70,6 +70,8 @@ The plugin saves your open files and then runs in the background; you can keep w
 - notes at the bottom of the tree say when something needs attention, for example old vulnerability advisories.
 
 **Tools → Inspect Project with Spring Inspector** opens the tool window and reviews the whole project in one step.
+To review some files or folders, select them in the project view (or right-click in the editor) and choose
+**Inspect with Spring Inspector**.
 
 ### In the editor
 
@@ -85,7 +87,8 @@ fix is refused instead of being applied in the wrong place; run the inspection a
 
 When you commit from IntelliJ, Spring Inspector first reviews the files in the commit. If the gate blocks, you can
 **Review** the problems (the commit stops and the tool window shows them), **Commit Anyway**, or **Cancel**. Turn the
-check on or off with **Check with Spring Inspector** in the commit window's options; the choice is remembered.
+check on or off with **Check with Spring Inspector** in the commit window's options, or in
+**Settings → Tools → Spring Inspector**; the choice is remembered.
 
 The plugin uses the same rules and the same `spring-inspector.yml` as the command line, so both always agree. Each
 category shows at most 20 findings by default; set `max-findings-per-category` higher to see more.

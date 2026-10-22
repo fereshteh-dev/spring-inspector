@@ -12,6 +12,7 @@
           or with <b>Tools | Inspect Project with Spring Inspector</b>.</li>
       <li>Findings are underlined in the editor with a gutter icon; <b>Alt+Enter</b> applies the fix, with a preview.</li>
       <li>Commits made from the IDE are checked first, like the git hook does.</li>
+      <li>Right-click files or folders and choose <b>Inspect with Spring Inspector</b>.</li>
       <li>Double-click a finding to open it in the editor.</li>
       <li>Your code never leaves your machine: the inspector runs locally, in its own process.</li>
     </ul>
@@ -52,6 +53,14 @@
                 description="Runs Spring Inspector on the whole project and shows its report card"
                 icon="AllIcons.Toolwindows.ToolWindowInspection">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="io.github.fereshtehdev.spring-inspector.inspectSelection"
+                class="io.github.fereshtehdev.springinspector.intellij.ui.InspectSelectionAction"
+                text="Inspect with Spring Inspector"
+                description="Runs Spring Inspector on the selected files and folders"
+                icon="AllIcons.Toolwindows.ToolWindowInspection">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>
