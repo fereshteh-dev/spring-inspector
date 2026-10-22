@@ -1,10 +1,10 @@
 package io.github.fereshtehdev.springinspector.intellij.editor;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -22,13 +22,14 @@ import java.util.WeakHashMap;
 
 /**
  * Draws the latest findings into open editors: the lines are underlined like the IDE's own problems, marked in the
- * scroll bar, and get a gutter icon that explains the finding. Highlights move with edits until the next run.
+ * scroll bar, and get a gutter icon that explains the finding. Highlights move with edits until the next run. Each
+ * editor of a file gets its own, through public editor APIs only.
  */
 final class EditorHighlights {
 
     private final Project project;
     private final InspectionResults results;
-    private final Map<Document, List<RangeHighlighter>> drawn = new WeakHashMap<>();
+    private final Map<Editor, List<RangeHighlighter>> drawn = new WeakHashMap<>();
 
     EditorHighlights(Project project, InspectionResults results) {
         this.project = project;
@@ -36,8 +37,8 @@ final class EditorHighlights {
     }
 
     void refreshOpenFiles() {
-        for (Document document : List.copyOf(drawn.keySet())) {
-            clear(document);
+        for (Editor editor : List.copyOf(drawn.keySet())) {
+            clear(editor);
         }
         for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
             refresh(file);
@@ -49,10 +50,17 @@ final class EditorHighlights {
         if (document == null) {
             return;
         }
-        clear(document);
-        MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
+        List<Finding> findings = results.findingsIn(file);
+        for (Editor editor : EditorFactory.getInstance().getEditors(document, project)) {
+            clear(editor);
+            draw(editor, document, findings);
+        }
+    }
+
+    private void draw(Editor editor, Document document, List<Finding> findings) {
+        MarkupModel markup = editor.getMarkupModel();
         List<RangeHighlighter> added = new ArrayList<>();
-        for (Finding finding : results.findingsIn(file)) {
+        for (Finding finding : findings) {
             if (finding.startLine() > document.getLineCount()) {
                 continue;
             }
@@ -71,14 +79,14 @@ final class EditorHighlights {
             added.add(highlighter);
         }
         if (!added.isEmpty()) {
-            drawn.put(document, added);
+            drawn.put(editor, added);
         }
     }
 
-    private void clear(Document document) {
-        List<RangeHighlighter> highlighters = drawn.remove(document);
+    private void clear(Editor editor) {
+        List<RangeHighlighter> highlighters = drawn.remove(editor);
         if (highlighters != null) {
-            highlighters.forEach(RangeHighlighter::dispose);
+            highlighters.stream().filter(RangeHighlighter::isValid).forEach(RangeHighlighter::dispose);
         }
     }
 
@@ -87,7 +95,7 @@ final class EditorHighlights {
             case BLOCKER -> CodeInsightColors.ERRORS_ATTRIBUTES;
             case MAJOR -> CodeInsightColors.WARNINGS_ATTRIBUTES;
             case MINOR -> CodeInsightColors.WEAK_WARNING_ATTRIBUTES;
-            case INFO -> HighlightInfoType.INFORMATION.getAttributesKey();
+            case INFO -> CodeInsightColors.INFORMATION_ATTRIBUTES;
         };
     }
 
