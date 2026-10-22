@@ -17,3 +17,8 @@ io.github.fereshtehdev.springinspector.rules.spring.WebSecurityConfigurerAdapter
 io.github.fereshtehdev.springinspector.rules.spring.SpringBootSupportCheck
 io.github.fereshtehdev.springinspector.rules.spring.NewerPatchCheck
 io.github.fereshtehdev.springinspector.rules.spring.JavaSupportCheck
+io.github.fereshtehdev.springinspector.rules.spring.ProxySelfInvocationCheck
+io.github.fereshtehdev.springinspector.rules.spring.RemoteCallInTransactionCheck
+io.github.fereshtehdev.springinspector.rules.spring.HttpClientTimeoutCheck
+io.github.fereshtehdev.springinspector.rules.spring.EagerFetchCheck
+io.github.fereshtehdev.springinspector.rules.spring.LombokDataEntityCheck

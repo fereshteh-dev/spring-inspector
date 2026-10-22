@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.ThisExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
@@ -112,5 +113,13 @@ final class SpringCode {
                 .map(FieldDeclaration::getVariables)
                 .flatMap(List::stream)
                 .anyMatch(variable -> variable.getNameAsString().equals(name));
+    }
+
+    /** A call such as {@code save()} or {@code this.save()} that stays inside the object, so it bypasses Spring's proxy. */
+    static boolean callsOwnMethod(MethodCallExpr call, ClassOrInterfaceDeclaration type) {
+        boolean sameObject =
+                call.getScope().map(scope -> scope instanceof ThisExpr).orElse(true);
+        Optional<ClassOrInterfaceDeclaration> enclosing = Nodes.ancestor(call, ClassOrInterfaceDeclaration.class);
+        return sameObject && enclosing.map(found -> found.equals(type)).orElse(false);
     }
 }

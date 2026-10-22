@@ -3,7 +3,6 @@ package io.github.fereshtehdev.springinspector.rules.spring;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.ast.expr.ThisExpr;
 import io.github.fereshtehdev.springinspector.core.domain.Category;
 import io.github.fereshtehdev.springinspector.core.domain.Confidence;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
@@ -13,10 +12,8 @@ import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.WhyItMatters;
 import io.github.fereshtehdev.springinspector.javamodel.JavaCheck;
 import io.github.fereshtehdev.springinspector.javamodel.JavaFile;
-import io.github.fereshtehdev.springinspector.javamodel.Nodes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,7 +65,7 @@ public final class TransactionalSelfInvocationCheck extends JavaCheck {
                     continue;
                 }
                 for (MethodCallExpr call : caller.findAll(MethodCallExpr.class)) {
-                    if (callsOwnMethod(call, type)
+                    if (SpringCode.callsOwnMethod(call, type)
                             && transactional.contains(call.getNameAsString())
                             && !call.getNameAsString().equals(caller.getNameAsString())) {
                         findings.add(finding(
@@ -85,12 +82,5 @@ public final class TransactionalSelfInvocationCheck extends JavaCheck {
             }
         }
         return findings;
-    }
-
-    private static boolean callsOwnMethod(MethodCallExpr call, ClassOrInterfaceDeclaration type) {
-        boolean sameObject =
-                call.getScope().map(scope -> scope instanceof ThisExpr).orElse(true);
-        Optional<ClassOrInterfaceDeclaration> enclosing = Nodes.ancestor(call, ClassOrInterfaceDeclaration.class);
-        return sameObject && enclosing.map(found -> found.equals(type)).orElse(false);
     }
 }

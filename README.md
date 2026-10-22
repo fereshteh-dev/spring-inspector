@@ -50,17 +50,22 @@ Works in IntelliJ IDEA (Community and Ultimate) and the other JetBrains IDEs, ve
 3. Open the **Spring Inspector** tool window at the bottom, or use **Tools → Inspect Project with Spring Inspector**.
 4. Click **Inspect Whole project**, **Inspect Staged changes** or **Inspect Current File**. Select a finding to read
    the explanation and the fix; double-click it to jump to the code.
-5. In the editor, findings are underlined with an icon in the gutter. Put the caret on one and press **Alt+Enter →
+5. To inspect only some files, right-click them or a folder in the project view and choose **Inspect with Spring
+   Inspector**.
+6. In the editor, findings are underlined with an icon in the gutter. Put the caret on one and press **Alt+Enter →
    Apply Spring Inspector fix** to see the change and apply it.
-6. Commits made from IntelliJ are checked first; you can review the problems or commit anyway. Turn this off with
+7. Commits made from IntelliJ are checked first; you can review the problems or commit anyway. Turn this off with
    the **Check with Spring Inspector** option in the commit window.
+8. The **Architecture** tab, or **Tools → Analyse Architecture with Spring Inspector**, shows how the project is
+   structured and suggests a cleaner structure.
 
 The inspector itself needs **Java 25 or newer**. IntelliJ IDEA 2026.2 already runs on Java 25, so there is nothing to
 set up. With an older IDE, install a JDK 25 and choose it in **Settings → Tools → Spring Inspector**.
 
 ### Command line and git hook
 
-Needs Java 25 or newer (`java -version`).
+Needs Java 25 or newer (`java -version`). The examples call the downloaded jar `spring-inspector.jar`; rename it, or
+use its full name `spring-inspector-<version>.jar`.
 
 ```shell
 java -jar spring-inspector.jar check --all                   # review the whole project
@@ -77,12 +82,12 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 
 ## What it checks
 
-58 rules in six categories. See the [rule catalogue](docs/rules/README.md) for all of them.
+63 rules in six categories. See the [rule catalogue](docs/rules/README.md) for all of them.
 
 | Category | Examples |
 |----------|----------|
 | **Security** (16) | SQL injection, hard-coded secrets, weak cryptography, `permitAll()` on admin paths, CSRF off, exposed actuator, XXE, SSRF, path traversal, unsafe deserialization, vulnerable dependencies |
-| **Spring Boot** (14) | field injection, `@Transactional` that never starts a transaction, entities in controllers, missing `@Valid`, N+1 queries, blocking calls in reactive code, virtual-thread pinning |
+| **Spring Boot** (19) | field injection, `@Transactional`, `@Async` or `@Cacheable` that the proxy never sees, remote calls inside transactions, HTTP clients without timeouts, eager collections, Lombok `@Data` on entities, entities in controllers, missing `@Valid`, N+1 queries, blocking calls in reactive code, virtual-thread pinning |
 | **Spring AI** (5) | user input in system prompts, one chat memory for all users, destructive tools without confirmation, model output used in SQL or shell commands |
 | **Clean code** (12) | long methods, deep nesting, swallowed exceptions, returning `null`, `Optional` misuse, data classes that should be records |
 | **Architecture** (5) | controllers using repositories directly, services depending on web classes, package cycles, framework imports in a hexagonal domain, features reaching into other features, new dependencies between features |
@@ -118,8 +123,10 @@ length, and ignore generated code. To accept one finding, add a comment with a r
 
 ## Privacy
 
-Spring Inspector never sends your code anywhere and never runs it. The only network access is `update`, which
-downloads public advisory data; nothing about your project is sent.
+Spring Inspector never sends your code anywhere and never runs it. The only network access is downloading public
+data: vulnerability advisories from OSV.dev and the release calendar from endoflife.date and Maven Central. `update`
+does it on demand, and the IntelliJ plugin and the git hook do it at most once a day. Nothing about your project is
+sent.
 
 ## Build from source
 
@@ -136,19 +143,24 @@ To compile the plugin against an IntelliJ you have installed instead of download
 
 ## Status and roadmap
 
-Spring Inspector is young. Version 0.2 adds editor highlighting, one-click fixes and a check before commit to the
-IntelliJ plugin. Next come the JetBrains Marketplace, architecture rules, and published accuracy numbers. See the
-[specification](docs/SPEC.md) (section 16) and the [changelog](CHANGELOG.md).
+Spring Inspector is young. Version 0.2 brought editor highlighting, one-click fixes and a check before commit to the
+IntelliJ plugin; version 0.3 added architecture analysis and fewer false alarms, found by reviewing every finding on
+Spring PetClinic, PetClinic REST and BuckPal. Next come the JetBrains Marketplace, a reviewer mode for pull requests,
+and published accuracy numbers from more open-source projects. See the [specification](docs/SPEC.md) (section 16) and
+the [changelog](CHANGELOG.md).
+
+Found a false alarm or a missing rule? [Open an issue](https://github.com/fereshteh-dev/spring-inspector/issues) with
+a small code sample, or [write the rule yourself](docs/writing-a-rule.md).
 
 ## Documentation
 
 - [User guide](docs/user-guide.md): installation, commands, configuration, CI, troubleshooting
-- [Rule catalogue](docs/rules/README.md)
+- [Rule catalogue](docs/rules/README.md) and [writing a rule](docs/writing-a-rule.md)
 - [Architecture](docs/architecture.md): how it works, with diagrams
 - [Specification](docs/SPEC.md) and [architecture decisions](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md), [releasing](docs/releasing.md) and [security policy](SECURITY.md)
 
 ## Licence
 
-[Apache License 2.0](LICENSE). Vulnerability data comes from OSV.dev and the GitHub Advisory Database (CC-BY 4.0) and
-is downloaded by each user; it is not part of this distribution.
+[Apache License 2.0](LICENSE). Vulnerability data comes from OSV.dev and the GitHub Advisory Database (CC-BY 4.0), and
+release dates from endoflife.date (MIT); both are downloaded by each user and are not part of this distribution.

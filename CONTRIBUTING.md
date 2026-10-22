@@ -2,8 +2,8 @@
 
 Thank you for helping. Bug reports with a small code sample, ideas for rules and pull requests are all welcome.
 
-A step-by-step guide to adding a rule is coming; until then, copy a rule from `inspector-rules-*` and its test,
-which uses the rule test kit in `inspector-rule-testkit`.
+To add a rule, follow [Writing a rule](docs/writing-a-rule.md): it walks through the class, its registration, sample
+files, tests, and checking the rule on real projects.
 
 ## Before you open a pull request
 

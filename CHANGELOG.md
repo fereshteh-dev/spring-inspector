@@ -2,6 +2,16 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
+## [Unreleased]
+
+### Added
+
+- Five Spring Boot rules for problems that usually only an experienced reviewer catches (63 rules in all):
+  `spring.proxy-self-invocation` (`@Async`, caching and `@Retryable` bypassed by calls inside the class),
+  `spring.remote-call-in-transaction`, `spring.http-client-without-timeout` (with a fix for the JDK client),
+  `spring.eager-fetch` and `spring.lombok-data-entity`.
+- [Writing a rule](docs/writing-a-rule.md): a step-by-step guide to adding your own rule.
+
 ## [0.3.0] - 2026-10-22
 
 ### Added

@@ -1,6 +1,6 @@
 # Rule catalogue
 
-Spring Inspector has 58 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
+Spring Inspector has 63 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
 it, and many come with a patch. Rules know your Java, Spring Boot and Spring AI versions and only run where they apply.
 
 Turn a rule off, change its severity or set its options in `spring-inspector.yml` (see the
@@ -28,7 +28,7 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `security.mass-assignment` | Request bodies bound directly to JPA entities |
 | `security.vulnerable-dependency` | Libraries with published vulnerabilities (CVE/GHSA), on the line that declares them, with the version that fixes them |
 
-## Spring Boot (14)
+## Spring Boot (19)
 
 | Rule | Finds |
 |------|-------|
@@ -36,13 +36,18 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `spring.autowired-constructor` | `@Autowired` on a single constructor, where it is not needed |
 | `spring.transactional-self-invocation` | `@Transactional` methods called from the same class, so no transaction starts |
 | `spring.transactional-not-proxied` | `@Transactional` on private or final methods, or in final classes, where it has no effect |
+| `spring.proxy-self-invocation` | `@Async`, `@Cacheable`, `@CachePut`, `@CacheEvict` and `@Retryable` methods called from the same class, so the annotation does nothing |
+| `spring.remote-call-in-transaction` | HTTP requests and AI model calls inside a transaction, which hold a database connection while waiting |
 | `spring.transactional-read-only` | Query-only transactional methods without `readOnly = true` |
 | `spring.entity-in-controller` | JPA entities returned from or accepted by controllers |
 | `spring.missing-valid` | Request bodies that are not validated with `@Valid` |
 | `spring.find-all-unpaged` | `findAll()` without paging on repositories |
+| `spring.eager-fetch` | Collections mapped with `fetch = FetchType.EAGER` |
+| `spring.lombok-data-entity` | Lombok `@Data`, `@Value` or `@EqualsAndHashCode` on JPA entities |
 | `spring.n-plus-one` | Lazy collections loaded one by one inside loops |
 | `spring.blocking-in-reactive` | Blocking calls inside reactive chains |
 | `spring.virtual-thread-pinning` | `synchronized` blocks around blocking calls that pin virtual threads (Java 21–23) |
+| `spring.http-client-without-timeout` | JDK `HttpClient`, `RestClient` and `RestTemplate` created without timeouts |
 | `spring.rest-template` | `RestTemplate` in new code where `RestClient` is the modern choice |
 | `spring.jackson2-in-boot4` | Jackson 2 (`com.fasterxml.jackson`) imports in a Spring Boot 4 project |
 | `spring.value-sprawl` | Many `@Value` fields that belong in a `@ConfigurationProperties` record |
