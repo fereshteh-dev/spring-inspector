@@ -90,7 +90,11 @@ When you commit from IntelliJ, Spring Inspector first reviews the files in the c
 check on or off with **Check with Spring Inspector** in the commit window's options, or in
 **Settings → Tools → Spring Inspector**; the choice is remembered.
 
-The plugin uses the same rules and the same `spring-inspector.yml` as the command line, so both always agree. Each
+The plugin uses the same rules and the same `spring-inspector.yml` as the command line, so both always agree.
+
+New rules come with new versions. Once a day, after a run, the plugin asks GitHub whether a newer version exists and
+says so, with a **Download** link; only the public release list is requested. Turn this off in
+**Settings → Tools → Spring Inspector**. Each
 category shows at most 20 findings by default; set `max-findings-per-category` higher to see more.
 
 ## Using the command line

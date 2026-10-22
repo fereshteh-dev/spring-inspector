@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import java.time.Instant;
 
 /** The plugin's settings for this machine, kept with the IDE's own settings. */
 @State(name = "SpringInspectorSettings", storages = @Storage("spring-inspector.xml"))
@@ -42,6 +43,23 @@ public final class InspectorSettings implements PersistentStateComponent<Inspect
         values.updateAdvisories = update;
     }
 
+    /** Whether the IDE says when a newer Spring Inspector is on GitHub. */
+    public boolean notifyAboutUpdates() {
+        return values.notifyAboutUpdates;
+    }
+
+    public void setNotifyAboutUpdates(boolean notify) {
+        values.notifyAboutUpdates = notify;
+    }
+
+    public Instant lastUpdateCheck() {
+        return Instant.ofEpochMilli(values.lastUpdateCheck);
+    }
+
+    public void setLastUpdateCheck(Instant checked) {
+        values.lastUpdateCheck = checked.toEpochMilli();
+    }
+
     @Override
     public Values getState() {
         return values;
@@ -57,5 +75,7 @@ public final class InspectorSettings implements PersistentStateComponent<Inspect
         public String javaPath = "";
         public boolean checkBeforeCommit = true;
         public boolean updateAdvisories = true;
+        public boolean notifyAboutUpdates = true;
+        public long lastUpdateCheck;
     }
 }

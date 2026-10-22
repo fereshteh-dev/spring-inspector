@@ -20,6 +20,9 @@ All notable changes are listed here. The project follows [semantic versioning](h
   published end-of-support dates and warns three months ahead.
 - New rules: `migration.newer-patch` (a newer Spring Boot or Spring AI patch release exists) and
   `migration.java-support` (the Java version no longer gets free updates).
+- IntelliJ: once a day, after a run, the plugin says when a newer version is on GitHub (can be turned off).
+- A weekly GitHub workflow opens an issue when Java, Spring Boot or Spring AI ship a new release line, so the rules
+  are reviewed for it.
 - Vulnerability advisories stay current by themselves: the IntelliJ plugin refreshes them in the background when
   they are a day old, and the git hook runs `update --max-age 1d --quiet` before each check. A failed download waits
   an hour before the next try.

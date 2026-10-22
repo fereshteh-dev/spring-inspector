@@ -117,6 +117,15 @@ tasks.prepareSandbox {
     }
 }
 
+// The plugin compares its own version with the newest GitHub release.
+tasks.processResources {
+    val pluginVersion = project.version.toString()
+    inputs.property("pluginVersion", pluginVersion)
+    filesMatching("**/plugin-version.properties") {
+        expand("version" to pluginVersion)
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }

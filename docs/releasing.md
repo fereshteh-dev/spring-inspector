@@ -16,6 +16,14 @@ everything, checks the plugin with JetBrains' Plugin Verifier, and publishes a G
 command-line jar and `SHA256SUMS`. When the `PUBLISH_TOKEN` secret is set, it also uploads the plugin to the
 JetBrains Marketplace.
 
+## Keeping the rules current
+
+Support dates, patch releases and vulnerability advisories reach users without a new version: `update`, the git hook
+and the plugin download them. New APIs and removals need new or changed rules. The
+[release watch](../.github/workflows/release-watch.yml) workflow checks every Monday for new Java, Spring Boot and
+Spring AI release lines and opens an issue such as *Review rules for Spring Boot 4.2* with a checklist. Run it by hand
+from **Actions → Release watch → Run workflow**.
+
 ## The JetBrains Marketplace
 
 Publishing on the [JetBrains Marketplace](https://plugins.jetbrains.com) lets developers install the plugin from

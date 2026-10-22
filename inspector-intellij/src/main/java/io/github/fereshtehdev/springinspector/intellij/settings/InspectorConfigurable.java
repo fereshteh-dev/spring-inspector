@@ -17,6 +17,8 @@ public final class InspectorConfigurable implements Configurable {
     private final JBCheckBox checkBeforeCommit = new JBCheckBox("Check commits made from the IDE");
     private final JBCheckBox updateAdvisories = new JBCheckBox(
             "Keep vulnerability advisories up to date (downloads public data daily; nothing about your project is sent)");
+    private final JBCheckBox notifyAboutUpdates =
+            new JBCheckBox("Tell me when a new version with new rules is on GitHub (checked daily)");
 
     @Override
     public String getDisplayName() {
@@ -35,6 +37,7 @@ public final class InspectorConfigurable implements Configurable {
                 .addComponentToRightColumn(hint)
                 .addComponent(checkBeforeCommit)
                 .addComponent(updateAdvisories)
+                .addComponent(notifyAboutUpdates)
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
     }
@@ -44,7 +47,8 @@ public final class InspectorConfigurable implements Configurable {
         InspectorSettings settings = InspectorSettings.getInstance();
         return !javaPath.getText().strip().equals(settings.javaPath())
                 || checkBeforeCommit.isSelected() != settings.checkBeforeCommit()
-                || updateAdvisories.isSelected() != settings.updateAdvisories();
+                || updateAdvisories.isSelected() != settings.updateAdvisories()
+                || notifyAboutUpdates.isSelected() != settings.notifyAboutUpdates();
     }
 
     @Override
@@ -52,6 +56,7 @@ public final class InspectorConfigurable implements Configurable {
         InspectorSettings.getInstance().setJavaPath(javaPath.getText());
         InspectorSettings.getInstance().setCheckBeforeCommit(checkBeforeCommit.isSelected());
         InspectorSettings.getInstance().setUpdateAdvisories(updateAdvisories.isSelected());
+        InspectorSettings.getInstance().setNotifyAboutUpdates(notifyAboutUpdates.isSelected());
     }
 
     @Override
@@ -59,5 +64,6 @@ public final class InspectorConfigurable implements Configurable {
         javaPath.setText(InspectorSettings.getInstance().javaPath());
         checkBeforeCommit.setSelected(InspectorSettings.getInstance().checkBeforeCommit());
         updateAdvisories.setSelected(InspectorSettings.getInstance().updateAdvisories());
+        notifyAboutUpdates.setSelected(InspectorSettings.getInstance().notifyAboutUpdates());
     }
 }

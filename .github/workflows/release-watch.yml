@@ -1,0 +1,74 @@
+name: Release watch
+
+# Opens an issue when Java, Spring Boot or Spring AI ship a new release line, so the rules get reviewed for it.
+# Support dates and patch releases need no issue: users get those through the release calendar that `update`
+# downloads. New APIs and removals do: they need new or changed rules.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open an issue for each new release line
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'SCRIPT'
+          import json, os, re, subprocess, urllib.request
+
+          def get(url):
+              request = urllib.request.Request(url, headers={"User-Agent": "spring-inspector-release-watch"})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return response.read().decode("utf-8")
+
+          def newest_cycle(product):
+              return json.loads(get(f"https://endoflife.date/api/{product}.json"))[0]["cycle"]
+
+          def newest_spring_ai_line():
+              xml = get("https://repo1.maven.org/maven2/org/springframework/ai/spring-ai-bom/maven-metadata.xml")
+              finals = re.findall(r"<version>(\d+)\.(\d+)\.\d+</version>", xml)
+              major, minor = max((int(a), int(b)) for a, b in finals)
+              return f"{major}.{minor}"
+
+          checklists = {
+              "Java": "- [ ] New language features that clean-code rules should suggest (version-aware)\n"
+                      "- [ ] Removed or deprecated APIs worth a migration rule\n"
+                      "- [ ] Rules whose advice changes with this version (for example virtual threads)\n",
+              "Spring Boot": "- [ ] Removed and deprecated APIs and properties: migration rules\n"
+                             "- [ ] New defaults that change security or actuator behaviour\n"
+                             "- [ ] Jackson, Hibernate and other managed versions that rules depend on\n",
+              "Spring AI": "- [ ] Removed classes (compare the old and new jars): `migration.spring-ai-1x-api` style rule\n"
+                           "- [ ] New APIs for prompts, tools, memory or advisors that need rules\n"
+                           "- [ ] Changes that make an existing Spring AI rule wrong or incomplete\n",
+          }
+          latest = {
+              "Java": newest_cycle("eclipse-temurin"),
+              "Spring Boot": newest_cycle("spring-boot"),
+              "Spring AI": newest_spring_ai_line(),
+          }
+          repository = os.environ["REPOSITORY"]
+          for product, line in latest.items():
+              title = f"Review rules for {product} {line}"
+              existing = subprocess.run(
+                  ["gh", "issue", "list", "--repo", repository, "--state", "all", "--search", f'"{title}" in:title',
+                   "--json", "title"],
+                  check=True, capture_output=True, text=True).stdout
+              if any(issue["title"] == title for issue in json.loads(existing)):
+                  print(f"Already tracked: {title}")
+                  continue
+              body = (f"{product} {line} is out. Check whether Spring Inspector's rules need to change:\n\n"
+                      f"{checklists[product]}\n"
+                      "Support dates and patch releases reach users automatically through the release calendar; "
+                      "this issue is about rules.")
+              subprocess.run(["gh", "issue", "create", "--repo", repository, "--title", title, "--body", body],
+                             check=True)
+              print(f"Opened: {title}")
+          SCRIPT
