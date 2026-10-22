@@ -15,3 +15,5 @@ io.github.fereshtehdev.springinspector.rules.spring.ValueSprawlCheck
 io.github.fereshtehdev.springinspector.rules.spring.JavaxNamespaceCheck
 io.github.fereshtehdev.springinspector.rules.spring.WebSecurityConfigurerAdapterCheck
 io.github.fereshtehdev.springinspector.rules.spring.SpringBootSupportCheck
+io.github.fereshtehdev.springinspector.rules.spring.NewerPatchCheck
+io.github.fereshtehdev.springinspector.rules.spring.JavaSupportCheck

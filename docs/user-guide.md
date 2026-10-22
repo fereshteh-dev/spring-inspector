@@ -153,6 +153,11 @@ Spring advisories. Later runs download only when the data changed. Behind a prox
 - every library, including indirect ones, inside an application jar or war you have built in `target/` or
   `build/libs/`.
 
+`update` also downloads the release calendar of Java (as Eclipse Temurin publishes it), Spring Boot (both from
+[endoflife.date](https://endoflife.date)) and Spring AI (from Maven Central). The migration rules use it to say when
+a Spring Boot or Java line leaves free support and when a newer patch release is out. Without it, they fall back to
+built-in dates or stay quiet.
+
 Each finding sits on the line that declares the library and names the lowest version that fixes all of its known
 vulnerabilities. Libraries whose version cannot be worked out are listed, never silently skipped; building the
 project once usually fixes that. Every report shows the date of the advisories and warns when they are more than 7

@@ -12,24 +12,25 @@ import io.github.fereshtehdev.springinspector.core.domain.RuleId;
 import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.WhatsWrong;
 import io.github.fereshtehdev.springinspector.core.domain.WhyItMatters;
-import io.github.fereshtehdev.springinspector.core.domain.change.FileChange;
 import io.github.fereshtehdev.springinspector.core.domain.change.SourceFile;
 import io.github.fereshtehdev.springinspector.core.domain.project.Version;
+import io.github.fereshtehdev.springinspector.core.domain.release.ReleaseCalendar;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
 import java.net.URI;
-import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Supplier;
 
 /**
- * A Spring Boot minor version that is most likely past its free (open-source) support. Spring supports each minor
- * release for at least 12 months; this rule allows 13 from the first release before calling it, using release dates
- * taken from Maven Central. It is reported on the build file, and only when that file is part of the change.
+ * A Spring Boot line that is out of open-source support, or leaves it within three months. The dates come from the
+ * release calendar that {@code update} downloads; without it, the rule estimates them from release dates (Spring
+ * supports each line for at least 12 months; 13 are allowed) and says it is an estimate. It is reported on the build
+ * file, and only when that file is part of the change.
  *
  * <p>The answer depends on today's date, so this is a plain {@link Check}: its result must not be cached per file.
  */
@@ -37,7 +38,7 @@ public final class SpringBootSupportCheck implements Check {
 
     static final RuleId ID = RuleId.of("migration.spring-boot-support");
 
-    /** First release of each minor version, from repo1.maven.org (org.springframework.boot:spring-boot). */
+    /** First release of each line, used only when no release calendar has been downloaded. */
     static final Map<String, LocalDate> RELEASED = Map.of(
             "2.7", LocalDate.of(2022, 5, 19),
             "3.0", LocalDate.of(2022, 11, 24),
@@ -49,8 +50,8 @@ public final class SpringBootSupportCheck implements Check {
             "4.0", LocalDate.of(2025, 11, 20),
             "4.1", LocalDate.of(2026, 6, 10));
 
+    static final int WARNING_DAYS = 90;
     private static final int SUPPORT_MONTHS = 13;
-    private static final Set<String> BUILD_FILES = Set.of("pom.xml", "build.gradle", "build.gradle.kts");
 
     private static final WhyItMatters WHY = new WhyItMatters(
             "Once a Spring Boot line leaves open-source support, security fixes for it and for the dependency versions"
@@ -60,13 +61,19 @@ public final class SpringBootSupportCheck implements Check {
                     "Spring Boot support timeline", URI.create("https://spring.io/projects/spring-boot#support"))));
 
     private final Clock clock;
+    private final Supplier<Optional<ReleaseCalendar>> calendar;
 
     public SpringBootSupportCheck() {
-        this(Clock.systemUTC());
+        this(Clock.systemUTC(), Optional::empty);
     }
 
     SpringBootSupportCheck(Clock clock) {
+        this(clock, Optional::empty);
+    }
+
+    public SpringBootSupportCheck(Clock clock, Supplier<Optional<ReleaseCalendar>> calendar) {
         this.clock = clock;
+        this.calendar = calendar;
     }
 
     @Override
@@ -85,53 +92,55 @@ public final class SpringBootSupportCheck implements Check {
         if (boot.isEmpty()) {
             return List.of();
         }
-        String minor = boot.get().major() + "." + boot.get().minor();
-        LocalDate released = RELEASED.get(minor);
-        if (released == null || LocalDate.now(clock).isBefore(released.plusMonths(SUPPORT_MONTHS))) {
-            return List.of();
-        }
-        return input.changeSet().files().stream()
-                .map(FileChange::path)
-                .filter(SpringBootSupportCheck::isBuildFile)
-                .flatMap(path -> input.sources().read(path).stream())
-                .filter(source -> source.content().contains(boot.get().toString())
-                        || source.content().contains("spring-boot"))
-                .limit(1)
-                .map(source -> finding(source, boot.get(), minor, released))
+        List<String> hints = List.of(boot.get().toString(), "spring-boot");
+        return BuildFiles.changed(input, hints)
+                .flatMap(build ->
+                        verdict(boot.get()).map(verdict -> finding(build, BuildFiles.lineOf(build, hints), verdict)))
+                .stream()
                 .toList();
     }
 
-    private Finding finding(SourceFile build, Version boot, String minor, LocalDate released) {
-        int line = lineOf(build.content(), boot.toString())
-                .or(() -> lineOf(build.content(), "spring-boot"))
-                .orElse(1);
+    private Optional<Verdict> verdict(Version boot) {
+        String line = boot.major() + "." + boot.minor();
+        LocalDate today = LocalDate.now(clock);
+        Optional<LocalDate> supportEnds = calendar.get()
+                .flatMap(known -> known.line(ReleaseCalendar.SPRING_BOOT, line))
+                .flatMap(ReleaseCalendar.ReleaseLine::supportEnds);
+        if (supportEnds.isPresent()) {
+            LocalDate end = supportEnds.get();
+            if (!today.isBefore(end)) {
+                return Optional.of(
+                        new Verdict("Spring Boot " + line + " left open-source support on " + end, Confidence.HIGH));
+            }
+            long days = ChronoUnit.DAYS.between(today, end);
+            return days <= WARNING_DAYS
+                    ? Optional.of(new Verdict(
+                            "Spring Boot " + line + " leaves open-source support on " + end + ", in " + days + " days",
+                            Confidence.HIGH))
+                    : Optional.empty();
+        }
+        LocalDate released = RELEASED.get(line);
+        if (released == null || today.isBefore(released.plusMonths(SUPPORT_MONTHS))) {
+            return Optional.empty();
+        }
+        return Optional.of(new Verdict(
+                "Spring Boot " + line + " (released " + released + ") is most likely out of open-source support",
+                Confidence.MEDIUM));
+    }
+
+    private static Finding finding(SourceFile build, LineRange line, Verdict verdict) {
         return new Finding(
                 ID,
                 Category.MIGRATION,
                 Severity.INFO,
-                new Location(build.path(), LineRange.line(line)),
-                new WhatsWrong(
-                        "Spring Boot " + minor + " (released " + released
-                                + ") is most likely out of open-source support",
-                        build.snippet(LineRange.line(line))),
+                new Location(build.path(), line),
+                new WhatsWrong(verdict.description(), build.snippet(line)),
                 WHY,
                 HowToFix.withoutPatch("Upgrade to a supported Spring Boot line; check the support timeline for the"
                         + " current dates. Upgrading one minor version at a time keeps each step small."),
-                Confidence.MEDIUM,
+                verdict.confidence(),
                 FindingSource.RULE);
     }
 
-    private static boolean isBuildFile(Path path) {
-        Path name = path.getFileName();
-        return name != null && BUILD_FILES.contains(name.toString());
-    }
-
-    private static Optional<Integer> lineOf(String content, String text) {
-        int index = content.indexOf(text);
-        if (index < 0) {
-            return Optional.empty();
-        }
-        return Optional.of(
-                (int) content.substring(0, index).chars().filter(c -> c == '\n').count() + 1);
-    }
+    private record Verdict(String description, Confidence confidence) {}
 }

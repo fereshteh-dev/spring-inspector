@@ -2,16 +2,25 @@ package io.github.fereshtehdev.springinspector.cli;
 
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryStore;
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryUpdater;
+import io.github.fereshtehdev.springinspector.advisories.AdvisoryUpdater.Outcome;
+import io.github.fereshtehdev.springinspector.advisories.ReleaseCalendarStore;
+import io.github.fereshtehdev.springinspector.advisories.ReleaseCalendarUpdater;
 import io.github.fereshtehdev.springinspector.advisories.VulnerableDependencyCheck;
 import io.github.fereshtehdev.springinspector.cli.render.Style;
+import io.github.fereshtehdev.springinspector.core.domain.release.ReleaseCalendar;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.git.HookInstaller;
 import io.github.fereshtehdev.springinspector.project.BuildFileProjectDetector;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;
+import io.github.fereshtehdev.springinspector.rules.spring.JavaSupportCheck;
+import io.github.fereshtehdev.springinspector.rules.spring.NewerPatchCheck;
+import io.github.fereshtehdev.springinspector.rules.spring.SpringBootSupportCheck;
 import java.io.Console;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +73,8 @@ public final class SpringInspector implements Runnable {
             PrintWriter err) {
         InspectorHome home = InspectorHome.from(environment, userHome);
         AdvisoryStore advisories = new AdvisoryStore(home.advisories());
-        List<Check> checks = new ArrayList<>(checks());
+        ReleaseCalendarStore releases = new ReleaseCalendarStore(home.advisories());
+        List<Check> checks = withReleaseCalendar(checks(), releases::load);
         checks.add(new VulnerableDependencyCheck(advisories, LocalRepository.forUser(userHome, environment)));
         Inspector inspector =
                 new Inspector(new BuildFileProjectDetector(), checks, environment, home, advisories::lastUpdated);
@@ -76,7 +86,10 @@ public final class SpringInspector implements Runnable {
                 .addSubcommand(new UpdateCommand(
                         maxAge -> {
                             AdvisoryUpdater updater = new AdvisoryUpdater(advisories, environment);
-                            return maxAge.map(updater::updateIfOlderThan).orElseGet(updater::update);
+                            Outcome outcome =
+                                    maxAge.map(updater::updateIfOlderThan).orElseGet(updater::update);
+                            updateReleaseCalendar(new ReleaseCalendarUpdater(releases, environment), maxAge, err);
+                            return outcome;
                         },
                         advisories.file(),
                         out,
@@ -97,6 +110,34 @@ public final class SpringInspector implements Runnable {
             return ExitCodes.FAILURE;
         });
         return commandLine;
+    }
+
+    /** Rules that know release dates read them from the downloaded calendar instead of their built-in table. */
+    static List<Check> withReleaseCalendar(List<Check> checks, Supplier<Optional<ReleaseCalendar>> calendar) {
+        Clock clock = Clock.systemUTC();
+        List<Check> replacements = List.of(
+                new SpringBootSupportCheck(clock, calendar),
+                new NewerPatchCheck(calendar),
+                new JavaSupportCheck(clock, calendar));
+        List<Check> result = new ArrayList<>();
+        for (Check check : checks) {
+            result.add(replacements.stream()
+                    .filter(replacement -> replacement.id().equals(check.id()))
+                    .findFirst()
+                    .orElse(check));
+        }
+        return result;
+    }
+
+    /** A release calendar that cannot be downloaded is not worth failing the update for; the last one stays. */
+    private static void updateReleaseCalendar(
+            ReleaseCalendarUpdater updater, Optional<Duration> maxAge, PrintWriter err) {
+        try {
+            maxAge.ifPresentOrElse(updater::updateIfOlderThan, updater::update);
+        } catch (RuntimeException failure) {
+            err.println("warning: could not update the release calendar: " + failure.getMessage());
+            err.flush();
+        }
     }
 
     /** Every check on the class path; each rule module registers its own. */

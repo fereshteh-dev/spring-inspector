@@ -74,7 +74,7 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 
 ## What it checks
 
-51 rules in five categories. See the [rule catalogue](docs/rules/README.md) for all of them.
+53 rules in five categories. See the [rule catalogue](docs/rules/README.md) for all of them.
 
 | Category | Examples |
 |----------|----------|
@@ -82,13 +82,14 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 | **Spring Boot** (14) | field injection, `@Transactional` that never starts a transaction, entities in controllers, missing `@Valid`, N+1 queries, blocking calls in reactive code, virtual-thread pinning |
 | **Spring AI** (5) | user input in system prompts, one chat memory for all users, destructive tools without confirmation, model output used in SQL or shell commands |
 | **Clean code** (12) | long methods, deep nesting, swallowed exceptions, returning `null`, `Optional` misuse, data classes that should be records |
-| **Migration** (4) | Spring Boot lines out of support, `javax` → `jakarta`, removed Spring Security and Spring AI APIs |
+| **Migration** (6) | Spring Boot and Java versions out of support, newer patch releases, `javax` → `jakarta`, removed Spring Security and Spring AI APIs |
 
 ### Vulnerable dependencies
 
 The public vulnerability advisories from [OSV.dev](https://osv.dev), which include the GitHub and Spring advisories,
 are downloaded and kept current automatically: the IntelliJ plugin and the git hook refresh them once a day, and
-`update` does it on demand. Checks themselves work offline. Spring Inspector reads your
+`update` does it on demand. The same refresh brings the release calendar of Java, Spring Boot and Spring AI, so rules
+about support dates and newer releases know about a new version the day it ships. Checks themselves work offline. Spring Inspector reads your
 dependencies without running your build: from `pom.xml` and Gradle files, from parents and BOMs such as Spring Boot's,
 and from an application jar you have already built. Every report says how old the advisories are.
 

@@ -15,6 +15,11 @@ All notable changes are listed here. The project follows [semantic versioning](h
   and the editor's right-click menu.
 - IntelliJ: plugin icon, "What's new" notes, and the commit check in Settings → Tools → Spring Inspector.
 - Command line: `check --files <file>...` reviews whole files, also outside git.
+- A release calendar of Java, Spring Boot and Spring AI, downloaded with the advisories from endoflife.date and Maven
+  Central, keeps version rules current without a new release. `migration.spring-boot-support` now uses the
+  published end-of-support dates and warns three months ahead.
+- New rules: `migration.newer-patch` (a newer Spring Boot or Spring AI patch release exists) and
+  `migration.java-support` (the Java version no longer gets free updates).
 - Vulnerability advisories stay current by themselves: the IntelliJ plugin refreshes them in the background when
   they are a day old, and the git hook runs `update --max-age 1d --quiet` before each check. A failed download waits
   an hour before the next try.

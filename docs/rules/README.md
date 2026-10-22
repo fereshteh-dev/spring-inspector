@@ -1,6 +1,6 @@
 # Rule catalogue
 
-Spring Inspector has 51 rules in five categories. Every finding explains what is wrong, why it matters and how to fix
+Spring Inspector has 53 rules in five categories. Every finding explains what is wrong, why it matters and how to fix
 it, and many come with a patch. Rules know your Java, Spring Boot and Spring AI versions and only run where they apply.
 
 Turn a rule off, change its severity or set its options in `spring-inspector.yml` (see the
@@ -74,13 +74,17 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `cleancode.instanceof-chain` | `instanceof` chains that a pattern-matching `switch` replaces (Java 21+) |
 | `cleancode.thread-pool-for-io` | Fixed thread pools for blocking I/O where virtual threads fit (Java 21+) |
 
-## Migration (4)
+## Migration (6)
 
-Information to plan upgrades; these findings never block a commit by default.
+Information to plan upgrades; these findings never block a commit by default. The rules about support dates and
+newest releases read the release calendar that `update` downloads (from endoflife.date and Maven Central), so they
+stay correct as new versions come out, without a new version of Spring Inspector.
 
 | Rule | Finds |
 |------|-------|
-| `migration.spring-boot-support` | A Spring Boot line that is most likely out of open-source support |
+| `migration.spring-boot-support` | A Spring Boot line that is out of open-source support, or leaves it within three months |
+| `migration.newer-patch` | A Spring Boot or Spring AI version with a newer patch release in the same line |
+| `migration.java-support` | A Java version that no longer gets free updates, with the longest-supported one to move to |
 | `migration.javax-namespace` | `javax.*` imports that moved to `jakarta.*` |
 | `migration.web-security-configurer-adapter` | `WebSecurityConfigurerAdapter`, removed in Spring Security 6 |
 | `migration.spring-ai-1x-api` | Spring AI 1.x classes removed in Spring AI 2.0 |
