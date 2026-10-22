@@ -33,6 +33,10 @@ jobs:
       - name: Build and test the command line
         run: ./mvnw -B -ntp verify
 
+      - name: Report failed tests
+        if: failure()
+        run: python3 .github/scripts/report-test-failures.py
+
       - name: Build, test and check the IntelliJ plugin
         working-directory: inspector-intellij
         run: |

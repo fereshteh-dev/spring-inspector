@@ -39,6 +39,10 @@ jobs:
       - name: Build and verify
         run: ./mvnw -B -ntp verify ${{ matrix.maven-args }}
 
+      - name: Report failed tests
+        if: failure()
+        run: python3 .github/scripts/report-test-failures.py
+
       - name: Upload SBOM
         if: matrix.java == '25'
         uses: actions/upload-artifact@v7
