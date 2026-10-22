@@ -1,4 +1,4 @@
-package io.github.fereshtehdev.springinspector.intellij.settings;
+package io.github.fereshtehdev.springinspector.intellij.ui;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.components.JBCheckBox;
@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import io.github.fereshtehdev.springinspector.intellij.run.JavaRuntimes;
+import io.github.fereshtehdev.springinspector.intellij.settings.InspectorSettings;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 

@@ -1,6 +1,6 @@
 # Rule catalogue
 
-Spring Inspector has 56 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
+Spring Inspector has 58 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
 it, and many come with a patch. Rules know your Java, Spring Boot and Spring AI versions and only run where they apply.
 
 Turn a rule off, change its severity or set its options in `spring-inspector.yml` (see the
@@ -74,7 +74,7 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `cleancode.instanceof-chain` | `instanceof` chains that a pattern-matching `switch` replaces (Java 21+) |
 | `cleancode.thread-pool-for-io` | Fixed thread pools for blocking I/O where virtual threads fit (Java 21+) |
 
-## Architecture (3)
+## Architecture (5)
 
 The architecture rules map the whole project from its `package` and `import` lines (fast, without compiling), work
 out each class's layer from its Spring stereotype, its name or its package, and report on the import statement that
@@ -85,6 +85,23 @@ causes the problem, so a review shows the line to change.
 | `architecture.layer-violation` | Dependencies against the layers: a controller using a repository directly, a service depending on web classes, a repository depending on services, domain classes depending on outer layers |
 | `architecture.package-cycle` | Packages that depend on each other in a circle |
 | `architecture.domain-depends-on-framework` | In a hexagonal (ports and adapters, clean, onion) project, domain classes that import Spring, JPA, Hibernate, Jackson or the Servlet API |
+| `architecture.feature-internals` | In an application organised by feature, a feature that uses another feature's inner classes instead of the classes in its own package (the boundary Spring Modulith checks) |
+| `architecture.new-feature-dependency` | A change that makes one feature depend on another for the first time, for the reviewer to confirm |
+
+Teams can declare their own layer rules, which replace the built-in ones for the layers they name:
+
+```yaml
+rules:
+  options:
+    architecture.layer-violation:
+      web: service, domain        # the web layer may use only services and the domain
+      service: repository, domain
+      domain: ""                  # the domain uses no other layer
+```
+
+Run `spring-inspector architecture`, or open the **Architecture** tab in IntelliJ, for the whole picture: the
+styles the project follows, a diagram of its parts, cycles, overloaded classes and suggestions for a cleaner
+structure. See the [user guide](../user-guide.md#architecture).
 
 ## Migration (6)
 

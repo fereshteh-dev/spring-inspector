@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import io.github.fereshtehdev.springinspector.core.domain.project.Version;
+import io.github.fereshtehdev.springinspector.project.build.BuildFileReader;
+import io.github.fereshtehdev.springinspector.project.build.JavaVersions;
+import io.github.fereshtehdev.springinspector.project.build.ModulePaths;
+import io.github.fereshtehdev.springinspector.project.build.Placeholders;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

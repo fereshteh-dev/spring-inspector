@@ -1,4 +1,4 @@
-package io.github.fereshtehdev.springinspector.project;
+package io.github.fereshtehdev.springinspector.project.build;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public final class BuildFileReader {
 
-    static final long MAX_BYTES = 1024 * 1024;
+    public static final long MAX_BYTES = 1024 * 1024;
 
     private final Path root;
     private final List<String> warnings = new ArrayList<>();

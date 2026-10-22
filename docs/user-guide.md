@@ -3,6 +3,7 @@
 - [Installation](#installation)
 - [Using the IntelliJ plugin](#using-the-intellij-plugin)
 - [Using the command line](#using-the-command-line)
+- [Architecture](#architecture)
 - [Vulnerable dependencies](#vulnerable-dependencies)
 - [Configuration](#configuration)
 - [Continuous integration](#continuous-integration)
@@ -137,6 +138,63 @@ blocks. To commit anyway once, use `git commit --no-verify`. An existing hook is
 
 Writes a commented `spring-inspector.yml` with the defaults to the project. Commit it so your whole team uses the same
 settings.
+
+## Architecture
+
+Spring Inspector maps the whole project from its `package` and `import` lines and works out each class's layer from
+its Spring annotation, its name or its package. It recognises these styles, often several at once, each with the
+evidence it saw and a confidence:
+
+| Style | Recognised from |
+|-------|-----------------|
+| Layered | top-level packages such as `controller`, `service`, `repository`, `domain` |
+| Package by feature | top-level packages named after business features, such as `orders`, `customers` |
+| Hexagonal (ports and adapters) | a `domain` package next to `port` and `adapter` packages |
+| Clean / onion | `domain` or `entities`, `usecase` or `application`, and `infrastructure` or `presentation` packages |
+| Spring Modulith | code that uses Spring Modulith, including `package-info.java` module declarations |
+| CQRS | `*Command` and `*Query` types, or `command` and `query` packages |
+| Event-driven | application events, `@EventListener`, Kafka, RabbitMQ or JMS listeners |
+| Multi-module build | several Maven or Gradle modules |
+| Several applications | more than one `@SpringBootApplication` in the repository |
+
+**In IntelliJ**, open the **Architecture** tab of the Spring Inspector tool window (or *Tools → Analyse Architecture
+with Spring Inspector*) and click **Analyse Architecture**. It shows the styles, the parts of the project and how
+they depend on each other, cycles, classes that do too much, and suggestions. **Open Diagram** opens the same report
+as Markdown; with IntelliJ's Markdown plugin, its preview draws the dependency diagram (enable *Mermaid* under
+*Settings → Languages & Frameworks → Markdown* if it is off).
+
+**On the command line:**
+
+```shell
+spring-inspector architecture                       # in the terminal
+spring-inspector architecture --format markdown > ARCHITECTURE.md   # a report with a Mermaid diagram
+spring-inspector architecture --format json         # for other tools
+```
+
+The suggestions name your own classes and packages, for example:
+
+- *Organise the code by feature*: for a layered project whose class names reveal features, a package map such as
+  `com.shop.order: OrderController, OrderService, OrderRepository, Order`;
+- *Break the cycle between orders and billing*: the cheapest link to cut and how;
+- *Route data access through services*, *Keep the domain free of frameworks*, *Make feature boundaries explicit
+  with Spring Modulith*, *Split classes that do too much*.
+
+Suggestions are advice for a team decision; nothing is moved automatically.
+
+The architecture rules report problems in the code itself, on the import that causes them; see the
+[rule catalogue](rules/README.md#architecture-5). To declare your own layer rules:
+
+```yaml
+rules:
+  options:
+    architecture.layer-violation:
+      web: service, domain
+      service: repository, domain
+      domain: ""
+```
+
+Layer names are `web`, `service`, `repository`, `domain`, `config` and `other`; a layer may always use itself and
+classes outside any layer.
 
 ## Vulnerable dependencies
 

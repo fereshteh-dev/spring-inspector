@@ -1,4 +1,4 @@
-package io.github.fereshtehdev.springinspector.project;
+package io.github.fereshtehdev.springinspector.project.build;
 
 import io.github.fereshtehdev.springinspector.core.domain.project.Version;
 import java.nio.file.Path;

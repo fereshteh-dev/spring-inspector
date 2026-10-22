@@ -12,6 +12,8 @@
           or with <b>Tools | Inspect Project with Spring Inspector</b>.</li>
       <li>Findings are underlined in the editor with a gutter icon; <b>Alt+Enter</b> applies the fix, with a preview.</li>
       <li>Commits made from the IDE are checked first, like the git hook does.</li>
+      <li>The <b>Architecture</b> tab recognises layered, package-by-feature, hexagonal, clean, Spring Modulith, CQRS
+          and event-driven structures, shows how the parts depend on each other, and suggests a cleaner structure.</li>
       <li>Right-click files or folders and choose <b>Inspect with Spring Inspector</b>.</li>
       <li>Double-click a finding to open it in the editor.</li>
       <li>Your code never leaves your machine: the inspector runs locally, in its own process.</li>
@@ -31,7 +33,7 @@
         <applicationConfigurable parentId="tools"
                                  id="io.github.fereshtehdev.spring-inspector.settings"
                                  displayName="Spring Inspector"
-                                 instance="io.github.fereshtehdev.springinspector.intellij.settings.InspectorConfigurable"/>
+                                 instance="io.github.fereshtehdev.springinspector.intellij.ui.InspectorConfigurable"/>
         <notificationGroup id="Spring Inspector" displayType="BALLOON"/>
         <intentionAction>
             <className>io.github.fereshtehdev.springinspector.intellij.editor.ApplyFixIntention</className>
@@ -52,6 +54,13 @@
                 text="Inspect Project with Spring Inspector"
                 description="Runs Spring Inspector on the whole project and shows its report card"
                 icon="AllIcons.Toolwindows.ToolWindowInspection">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="io.github.fereshtehdev.spring-inspector.architecture"
+                class="io.github.fereshtehdev.springinspector.intellij.ui.AnalyseArchitectureAction"
+                text="Analyse Architecture with Spring Inspector"
+                description="Describes the architecture of the project and suggests a cleaner structure"
+                icon="AllIcons.Toolwindows.ToolWindowHierarchy">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
         <action id="io.github.fereshtehdev.spring-inspector.inspectSelection"

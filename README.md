@@ -68,6 +68,7 @@ java -jar spring-inspector.jar check                         # review only your 
 java -jar spring-inspector.jar check --base main             # review everything since you branched off main
 java -jar spring-inspector.jar check --files src/main/java/com/acme/Orders.java   # review whole files
 java -jar spring-inspector.jar check --details security      # explain every finding of one category
+java -jar spring-inspector.jar architecture                  # describe the architecture and suggest a cleaner one
 java -jar spring-inspector.jar install-hook                  # review every commit automatically
 java -jar spring-inspector.jar update                        # download vulnerability advisories now
 ```
@@ -76,7 +77,7 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 
 ## What it checks
 
-56 rules in six categories. See the [rule catalogue](docs/rules/README.md) for all of them.
+58 rules in six categories. See the [rule catalogue](docs/rules/README.md) for all of them.
 
 | Category | Examples |
 |----------|----------|
@@ -84,8 +85,17 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 | **Spring Boot** (14) | field injection, `@Transactional` that never starts a transaction, entities in controllers, missing `@Valid`, N+1 queries, blocking calls in reactive code, virtual-thread pinning |
 | **Spring AI** (5) | user input in system prompts, one chat memory for all users, destructive tools without confirmation, model output used in SQL or shell commands |
 | **Clean code** (12) | long methods, deep nesting, swallowed exceptions, returning `null`, `Optional` misuse, data classes that should be records |
-| **Architecture** (3) | controllers using repositories directly, services depending on web classes, package cycles, framework imports in a hexagonal domain |
+| **Architecture** (5) | controllers using repositories directly, services depending on web classes, package cycles, framework imports in a hexagonal domain, features reaching into other features, new dependencies between features |
 | **Migration** (6) | Spring Boot and Java versions out of support, newer patch releases, `javax` → `jakarta`, removed Spring Security and Spring AI APIs |
+
+### Architecture
+
+Spring Inspector recognises how a project is built (layered, package by feature, hexagonal, clean or onion, Spring
+Modulith, CQRS, event-driven, multi-module, several applications in one repository, and mixes of these), checks
+that the code keeps to it, and suggests a cleaner structure where it can: for example, a package-by-feature layout
+built from your own classes, the cheapest link to cut in a dependency cycle, or which overloaded class to split.
+Open the **Architecture** tab in IntelliJ, or run `spring-inspector architecture --format markdown` for a report
+with a diagram.
 
 ### Vulnerable dependencies
 

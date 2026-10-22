@@ -128,5 +128,6 @@
 16. Roadmap after the first release
     • v0.1 (first public release): CLI, git hook, 51 rules, vulnerable dependencies, IntelliJ tool window.
     • v0.2: IntelliJ editor highlighting, quick-fixes, check before commit; Plugin Verifier; JetBrains Marketplace.
-    • v0.3: architecture rules and architecture diff; evaluation harness with published precision/recall.
+    • v0.3: architecture: style recognition (layered, package by feature, hexagonal, clean, Spring Modulith, CQRS, event-driven, multi-module), architecture rules, report with diagram and suggestions, IntelliJ Architecture tab.
+    • v0.4: evaluation harness with published precision/recall; reviewer mode (review a branch) in IntelliJ.
     • Later: optional local AI explanations (section 9), the fun part (section 10), Kotlin, more distribution channels.

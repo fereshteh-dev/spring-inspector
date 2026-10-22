@@ -1,6 +1,6 @@
 package io.github.fereshtehdev.springinspector.project.maven;
 
-import io.github.fereshtehdev.springinspector.project.Placeholders;
+import io.github.fereshtehdev.springinspector.project.build.Placeholders;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;
 import io.github.fereshtehdev.springinspector.project.maven.Pom.Coordinates;
 import java.util.ArrayList;

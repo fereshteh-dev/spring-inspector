@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import io.github.fereshtehdev.springinspector.intellij.editor.PatchText;
+import io.github.fereshtehdev.springinspector.intellij.report.ArchitectureView;
 import io.github.fereshtehdev.springinspector.intellij.report.Report;
 import io.github.fereshtehdev.springinspector.intellij.report.Report.Finding;
 import java.io.IOException;
@@ -146,6 +147,30 @@ class BundledCommandLineTest {
                         completed.report().categories().stream()
                                 .flatMap(category -> category.findings().stream()))
                 .anySatisfy(finding -> assertThat(finding.file()).isEqualTo("src/main/java/my demo/Swallow.java")));
+    }
+
+    @Test
+    void describesTheArchitectureForTheArchitectureTab() throws IOException, InterruptedException {
+        assumeTrue(Files.isRegularFile(JAR), "build the command line first with ./mvnw package");
+        assumeTrue(Runtime.version().feature() >= JavaRuntimes.REQUIRED_FEATURE, "needs Java 25 to run the jar");
+        Path project = Files.createDirectories(temp.resolve("layered"));
+        for (String layer : List.of("web", "service", "repository")) {
+            Path folder = Files.createDirectories(project.resolve("src/main/java/com/shop/" + layer));
+            Files.writeString(folder.resolve("Thing.java"), "package com.shop." + layer + ";\nclass Thing {}\n");
+        }
+
+        Process process = new ProcessBuilder(InspectorCommand.architecture(java(), JAR.toAbsolutePath(), project))
+                .redirectError(temp.resolve("architecture-stderr.txt").toFile())
+                .start();
+        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(process.waitFor(2, TimeUnit.MINUTES)).isTrue();
+
+        assertThat(process.exitValue()).isZero();
+        ArchitectureView view =
+                ArchitectureView.read(stdout);
+        assertThat(view.rootPackage()).isEqualTo("com.shop");
+        assertThat(view.styles()).extracting(style -> style.title()).contains("Layered");
+        assertThat(view.markdown()).contains("```mermaid");
     }
 
     private RunOutcome run(InspectorCommand command) throws IOException, InterruptedException {

@@ -71,6 +71,14 @@ final class JsonTree {
         return value instanceof Map<?, ?> object ? new JsonTree(object.get(name)) : new JsonTree(null);
     }
 
+    /** The field names of an object, in order; empty for anything else. */
+    List<String> names() {
+        if (!(value instanceof Map<?, ?> object)) {
+            return List.of();
+        }
+        return object.keySet().stream().map(String::valueOf).toList();
+    }
+
     List<JsonTree> items() {
         return value instanceof List<?> array ? array.stream().map(JsonTree::new).toList() : List.of();
     }

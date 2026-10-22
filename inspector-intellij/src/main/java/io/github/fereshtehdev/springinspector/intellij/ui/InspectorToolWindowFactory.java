@@ -14,7 +14,10 @@ public final class InspectorToolWindowFactory implements ToolWindowFactory, Dumb
 
     @Override
     public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-        Content content = ContentFactory.getInstance().createContent(new InspectorPanel(project), "", false);
-        toolWindow.getContentManager().addContent(content);
+        ContentFactory factory = ContentFactory.getInstance();
+        Content inspection = factory.createContent(new InspectorPanel(project), "Inspection", false);
+        Content architecture = factory.createContent(new ArchitecturePanel(project), "Architecture", false);
+        toolWindow.getContentManager().addContent(inspection);
+        toolWindow.getContentManager().addContent(architecture);
     }
 }

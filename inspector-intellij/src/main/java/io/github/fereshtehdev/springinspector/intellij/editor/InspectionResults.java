@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
  * The findings of the project's latest run, by file, for the editor: its highlights, gutter icons and the Alt+Enter
@@ -22,6 +23,7 @@ public final class InspectionResults {
     private final Project project;
     private final Map<String, List<Finding>> byFile = new ConcurrentHashMap<>();
     private final EditorHighlights highlights;
+    private volatile Consumer<Finding> reveal = finding -> {};
 
     public InspectionResults(Project project) {
         this.project = project;
@@ -62,6 +64,15 @@ public final class InspectionResults {
             return remaining.isEmpty() ? null : remaining;
         });
         highlights.refresh(file);
+    }
+
+    /** What clicking a finding's gutter icon does; the tool window registers itself here. */
+    public void onReveal(Consumer<Finding> reveal) {
+        this.reveal = reveal;
+    }
+
+    void reveal(Finding finding) {
+        reveal.accept(finding);
     }
 
     EditorHighlights highlights() {

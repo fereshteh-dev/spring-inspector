@@ -37,7 +37,6 @@ import io.github.fereshtehdev.springinspector.intellij.report.Report.Finding;
 import io.github.fereshtehdev.springinspector.intellij.run.InspectionScope;
 import io.github.fereshtehdev.springinspector.intellij.run.InspectorRunner;
 import io.github.fereshtehdev.springinspector.intellij.run.RunOutcome;
-import io.github.fereshtehdev.springinspector.intellij.settings.InspectorConfigurable;
 import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -71,6 +70,7 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
     public InspectorPanel(Project project) {
         super(true, true);
         this.project = project;
+        InspectionResults.getInstance(project).onReveal(finding -> reveal(project, finding));
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
         tree.setCellRenderer(new FindingTreeRenderer());
@@ -136,6 +136,22 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
             Content content = toolWindow.getContentManager().getContent(0);
             if (content != null && content.getComponent() instanceof InspectorPanel panel) {
                 action.accept(panel);
+            }
+        });
+    }
+
+    /** Opens the Architecture tab and starts an analysis. */
+    public static void analyseArchitecture(Project project) {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(InspectorToolWindowFactory.ID);
+        if (toolWindow == null) {
+            return;
+        }
+        toolWindow.activate(() -> {
+            for (Content content : toolWindow.getContentManager().getContents()) {
+                if (content.getComponent() instanceof ArchitecturePanel panel) {
+                    toolWindow.getContentManager().setSelectedContent(content);
+                    panel.analyse();
+                }
             }
         });
     }

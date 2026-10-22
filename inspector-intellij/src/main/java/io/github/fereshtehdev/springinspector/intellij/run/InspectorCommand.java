@@ -67,6 +67,21 @@ public record InspectorCommand(Path java, Path jar, Path project, InspectionScop
                 "--quiet");
     }
 
+    /** Describes the project's architecture as JSON. */
+    public static List<String> architecture(Path java, Path jar, Path project) {
+        return List.of(
+                java.toString(),
+                "-Dstdout.encoding=UTF-8",
+                "-Dstderr.encoding=UTF-8",
+                "-jar",
+                jar.toString(),
+                "architecture",
+                "--format",
+                "json",
+                "--project",
+                project.toString());
+    }
+
     /** The argument file's content: one quoted path per line, with {@code /} separators. */
     public String argumentFileContent() {
         StringBuilder content = new StringBuilder();

@@ -2,12 +2,23 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
-## [0.3.0] - unreleased
+## [0.3.0] - 2026-10-22
 
 ### Added
 
 - Architecture rules, from a map of the whole project's packages and imports: `architecture.layer-violation`,
-  `architecture.package-cycle` and `architecture.domain-depends-on-framework` (56 rules in six categories).
+  `architecture.package-cycle`, `architecture.domain-depends-on-framework`, `architecture.feature-internals` and
+  `architecture.new-feature-dependency` (58 rules in six categories). Layer rules can be declared in
+  `spring-inspector.yml`.
+- Architecture styles are recognised with their evidence: layered, package by feature, hexagonal, clean / onion,
+  Spring Modulith, CQRS, event-driven, multi-module builds and several applications in one repository.
+- `spring-inspector architecture [--format terminal|markdown|json]` and the IntelliJ **Architecture** tab show the
+  styles, a diagram of the parts and their dependencies, cycles, overloaded classes, and concrete suggestions for a
+  cleaner structure.
+
+### Changed
+
+- Spring Inspector's own code has no package cycles any more: its architecture check found three, now fixed.
 
 ## [0.2.0] - 2026-10-22
 

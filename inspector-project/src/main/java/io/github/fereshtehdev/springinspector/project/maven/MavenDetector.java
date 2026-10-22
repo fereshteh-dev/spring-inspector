@@ -1,11 +1,11 @@
 package io.github.fereshtehdev.springinspector.project.maven;
 
-import io.github.fereshtehdev.springinspector.project.BuildFacts;
-import io.github.fereshtehdev.springinspector.project.BuildFileReader;
-import io.github.fereshtehdev.springinspector.project.JavaVersions;
-import io.github.fereshtehdev.springinspector.project.ModulePaths;
-import io.github.fereshtehdev.springinspector.project.Placeholders;
-import io.github.fereshtehdev.springinspector.project.VersionCandidates;
+import io.github.fereshtehdev.springinspector.project.build.BuildFacts;
+import io.github.fereshtehdev.springinspector.project.build.BuildFileReader;
+import io.github.fereshtehdev.springinspector.project.build.JavaVersions;
+import io.github.fereshtehdev.springinspector.project.build.ModulePaths;
+import io.github.fereshtehdev.springinspector.project.build.Placeholders;
+import io.github.fereshtehdev.springinspector.project.build.VersionCandidates;
 import io.github.fereshtehdev.springinspector.project.maven.Pom.Coordinates;
 import io.github.fereshtehdev.springinspector.project.maven.Pom.Plugin;
 import java.nio.file.Path;

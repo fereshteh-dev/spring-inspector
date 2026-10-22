@@ -1,4 +1,4 @@
-package io.github.fereshtehdev.springinspector.project;
+package io.github.fereshtehdev.springinspector.project.build;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;

@@ -1,8 +1,8 @@
 package io.github.fereshtehdev.springinspector.project.maven;
 
-import io.github.fereshtehdev.springinspector.project.BuildFileReader;
-import io.github.fereshtehdev.springinspector.project.ModulePaths;
-import io.github.fereshtehdev.springinspector.project.Placeholders;
+import io.github.fereshtehdev.springinspector.project.build.BuildFileReader;
+import io.github.fereshtehdev.springinspector.project.build.ModulePaths;
+import io.github.fereshtehdev.springinspector.project.build.Placeholders;
 import io.github.fereshtehdev.springinspector.project.dependencies.Dependency;
 import io.github.fereshtehdev.springinspector.project.dependencies.Dependency.Origin;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;

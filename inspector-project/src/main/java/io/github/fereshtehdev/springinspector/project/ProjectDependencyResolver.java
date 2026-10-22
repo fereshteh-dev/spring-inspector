@@ -2,6 +2,7 @@ package io.github.fereshtehdev.springinspector.project;
 
 import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
 import io.github.fereshtehdev.springinspector.core.domain.project.Version;
+import io.github.fereshtehdev.springinspector.project.build.BuildFileReader;
 import io.github.fereshtehdev.springinspector.project.dependencies.Dependency;
 import io.github.fereshtehdev.springinspector.project.dependencies.Dependency.Origin;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;

@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import io.github.fereshtehdev.springinspector.intellij.report.ArchitectureView;
 import io.github.fereshtehdev.springinspector.intellij.settings.InspectorSettings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -94,6 +95,38 @@ public final class InspectorRunner {
             return Optional.of(detail.isEmpty() ? "the update did not finish" : detail);
         } catch (ExecutionException e) {
             return Optional.of(String.valueOf(e.getMessage()));
+        }
+    }
+
+    /** The outcome of describing the architecture: the report, or why there is none. */
+    public sealed interface ArchitectureOutcome {
+
+        record Described(ArchitectureView view) implements ArchitectureOutcome {}
+
+        record Failed(String message) implements ArchitectureOutcome {}
+    }
+
+    public static ArchitectureOutcome architecture(Path project, ProgressIndicator indicator) {
+        Optional<Path> java = java();
+        Optional<Path> jar = bundledJar();
+        if (java.isEmpty() || jar.isEmpty()) {
+            return new ArchitectureOutcome.Failed("Spring Inspector needs Java " + JavaRuntimes.REQUIRED_FEATURE
+                    + " or newer; choose one in Settings | Tools | Spring Inspector.");
+        }
+        try {
+            ProcessOutput output = new CapturingProcessHandler(new GeneralCommandLine(
+                                    InspectorCommand.architecture(java.get(), jar.get(), project))
+                            .withWorkDirectory(project.toFile())
+                            .withCharset(StandardCharsets.UTF_8))
+                    .runProcessWithProgressIndicator(indicator, (int) TIMEOUT.toMillis());
+            if (output.isCancelled() || output.isTimeout() || output.getExitCode() != 0) {
+                String detail = output.getStderr().strip();
+                return new ArchitectureOutcome.Failed(
+                        "The architecture could not be described" + (detail.isEmpty() ? "." : ": " + detail));
+            }
+            return new ArchitectureOutcome.Described(ArchitectureView.read(output.getStdout()));
+        } catch (ExecutionException | IllegalArgumentException e) {
+            return new ArchitectureOutcome.Failed("The architecture could not be described: " + e.getMessage());
         }
     }
 

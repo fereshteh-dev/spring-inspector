@@ -1,4 +1,4 @@
-package io.github.fereshtehdev.springinspector.project;
+package io.github.fereshtehdev.springinspector.project.build;
 
 import java.util.Map;
 import java.util.Optional;

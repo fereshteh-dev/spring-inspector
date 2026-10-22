@@ -1,6 +1,6 @@
 package io.github.fereshtehdev.springinspector.project.gradle;
 
-import io.github.fereshtehdev.springinspector.project.BuildFileReader;
+import io.github.fereshtehdev.springinspector.project.build.BuildFileReader;
 import io.github.fereshtehdev.springinspector.project.dependencies.Dependency;
 import io.github.fereshtehdev.springinspector.project.dependencies.Dependency.Origin;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;

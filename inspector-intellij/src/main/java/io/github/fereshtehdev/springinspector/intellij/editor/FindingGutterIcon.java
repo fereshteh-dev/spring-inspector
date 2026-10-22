@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAwareAction;
 import io.github.fereshtehdev.springinspector.intellij.report.Report.Finding;
-import io.github.fereshtehdev.springinspector.intellij.ui.InspectorPanel;
 import java.util.Objects;
 import javax.swing.Icon;
 import org.jspecify.annotations.Nullable;
@@ -46,7 +45,7 @@ final class FindingGutterIcon extends GutterIconRenderer {
             @Override
             public void actionPerformed(AnActionEvent event) {
                 if (event.getProject() != null) {
-                    InspectorPanel.reveal(event.getProject(), finding);
+                    InspectionResults.getInstance(event.getProject()).reveal(finding);
                 }
             }
         };
