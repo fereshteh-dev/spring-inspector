@@ -7,11 +7,17 @@ import io.github.fereshtehdev.springinspector.advisories.ReleaseCalendarStore;
 import io.github.fereshtehdev.springinspector.advisories.ReleaseCalendarUpdater;
 import io.github.fereshtehdev.springinspector.advisories.VulnerableDependencyCheck;
 import io.github.fereshtehdev.springinspector.cli.render.Style;
+import io.github.fereshtehdev.springinspector.core.domain.architecture.ImportGraph;
+import io.github.fereshtehdev.springinspector.core.domain.project.ProjectContext;
 import io.github.fereshtehdev.springinspector.core.domain.release.ReleaseCalendar;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.git.HookInstaller;
 import io.github.fereshtehdev.springinspector.project.BuildFileProjectDetector;
+import io.github.fereshtehdev.springinspector.project.architecture.JavaImportScanner;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;
+import io.github.fereshtehdev.springinspector.rules.architecture.DomainFrameworkCheck;
+import io.github.fereshtehdev.springinspector.rules.architecture.LayerViolationCheck;
+import io.github.fereshtehdev.springinspector.rules.architecture.PackageCycleCheck;
 import io.github.fereshtehdev.springinspector.rules.spring.JavaSupportCheck;
 import io.github.fereshtehdev.springinspector.rules.spring.NewerPatchCheck;
 import io.github.fereshtehdev.springinspector.rules.spring.SpringBootSupportCheck;
@@ -26,7 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -74,7 +83,7 @@ public final class SpringInspector implements Runnable {
         InspectorHome home = InspectorHome.from(environment, userHome);
         AdvisoryStore advisories = new AdvisoryStore(home.advisories());
         ReleaseCalendarStore releases = new ReleaseCalendarStore(home.advisories());
-        List<Check> checks = withReleaseCalendar(checks(), releases::load);
+        List<Check> checks = withProjectMap(withReleaseCalendar(checks(), releases::load), projectMaps());
         checks.add(new VulnerableDependencyCheck(advisories, LocalRepository.forUser(userHome, environment)));
         Inspector inspector =
                 new Inspector(new BuildFileProjectDetector(), checks, environment, home, advisories::lastUpdated);
@@ -127,6 +136,23 @@ public final class SpringInspector implements Runnable {
                     .orElse(check));
         }
         return result;
+    }
+
+    /** Architecture rules read the map of the whole project, scanned once per run and shared between them. */
+    static List<Check> withProjectMap(List<Check> checks, Function<ProjectContext, ImportGraph> maps) {
+        List<Check> replacements =
+                List.of(new LayerViolationCheck(maps), new PackageCycleCheck(maps), new DomainFrameworkCheck(maps));
+        return checks.stream()
+                .map(check -> replacements.stream()
+                        .filter(replacement -> replacement.id().equals(check.id()))
+                        .findFirst()
+                        .orElse(check))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private static Function<ProjectContext, ImportGraph> projectMaps() {
+        Map<Path, ImportGraph> scanned = new ConcurrentHashMap<>();
+        return project -> scanned.computeIfAbsent(project.root(), JavaImportScanner::scan);
     }
 
     /** A release calendar that cannot be downloaded is not worth failing the update for; the last one stays. */

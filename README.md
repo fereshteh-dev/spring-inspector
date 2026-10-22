@@ -76,7 +76,7 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 
 ## What it checks
 
-53 rules in five categories. See the [rule catalogue](docs/rules/README.md) for all of them.
+56 rules in six categories. See the [rule catalogue](docs/rules/README.md) for all of them.
 
 | Category | Examples |
 |----------|----------|
@@ -84,6 +84,7 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 | **Spring Boot** (14) | field injection, `@Transactional` that never starts a transaction, entities in controllers, missing `@Valid`, N+1 queries, blocking calls in reactive code, virtual-thread pinning |
 | **Spring AI** (5) | user input in system prompts, one chat memory for all users, destructive tools without confirmation, model output used in SQL or shell commands |
 | **Clean code** (12) | long methods, deep nesting, swallowed exceptions, returning `null`, `Optional` misuse, data classes that should be records |
+| **Architecture** (3) | controllers using repositories directly, services depending on web classes, package cycles, framework imports in a hexagonal domain |
 | **Migration** (6) | Spring Boot and Java versions out of support, newer patch releases, `javax` → `jakarta`, removed Spring Security and Spring AI APIs |
 
 ### Vulnerable dependencies

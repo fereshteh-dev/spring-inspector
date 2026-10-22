@@ -2,6 +2,13 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
+## [0.3.0] - unreleased
+
+### Added
+
+- Architecture rules, from a map of the whole project's packages and imports: `architecture.layer-violation`,
+  `architecture.package-cycle` and `architecture.domain-depends-on-framework` (56 rules in six categories).
+
 ## [0.2.0] - 2026-10-22
 
 ### Added

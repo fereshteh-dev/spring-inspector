@@ -1,6 +1,6 @@
 # Rule catalogue
 
-Spring Inspector has 53 rules in five categories. Every finding explains what is wrong, why it matters and how to fix
+Spring Inspector has 56 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
 it, and many come with a patch. Rules know your Java, Spring Boot and Spring AI versions and only run where they apply.
 
 Turn a rule off, change its severity or set its options in `spring-inspector.yml` (see the
@@ -73,6 +73,18 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `cleancode.data-class-to-record` | Data classes that can be records (Java 16+) |
 | `cleancode.instanceof-chain` | `instanceof` chains that a pattern-matching `switch` replaces (Java 21+) |
 | `cleancode.thread-pool-for-io` | Fixed thread pools for blocking I/O where virtual threads fit (Java 21+) |
+
+## Architecture (3)
+
+The architecture rules map the whole project from its `package` and `import` lines (fast, without compiling), work
+out each class's layer from its Spring stereotype, its name or its package, and report on the import statement that
+causes the problem, so a review shows the line to change.
+
+| Rule | Finds |
+|------|-------|
+| `architecture.layer-violation` | Dependencies against the layers: a controller using a repository directly, a service depending on web classes, a repository depending on services, domain classes depending on outer layers |
+| `architecture.package-cycle` | Packages that depend on each other in a circle |
+| `architecture.domain-depends-on-framework` | In a hexagonal (ports and adapters, clean, onion) project, domain classes that import Spring, JPA, Hibernate, Jackson or the Servlet API |
 
 ## Migration (6)
 

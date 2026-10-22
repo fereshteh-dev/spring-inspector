@@ -3,6 +3,7 @@ package io.github.fereshtehdev.springinspector.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.fereshtehdev.springinspector.core.domain.RuleId;
+import io.github.fereshtehdev.springinspector.core.domain.architecture.ImportGraph;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,21 @@ class ReleaseCalendarWiringTest {
                 assertThat(wired.get(index)).isSameAs(registered.get(index));
             }
         }
+    }
+
+    @Test
+    void givesTheProjectMapToTheArchitectureRules() {
+        List<Check> registered = SpringInspector.checks();
+
+        List<Check> wired = SpringInspector.withProjectMap(registered, project -> ImportGraph.empty());
+
+        assertThat(ids(wired)).isEqualTo(ids(registered));
+        assertThat(ids(wired))
+                .contains(
+                        RuleId.of("architecture.layer-violation"),
+                        RuleId.of("architecture.package-cycle"),
+                        RuleId.of("architecture.domain-depends-on-framework"));
+        assertThat(wired).hasSameSizeAs(registered);
     }
 
     private static Set<RuleId> ids(List<Check> checks) {
