@@ -5,14 +5,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryUpdater.Download;
 import io.github.fereshtehdev.springinspector.advisories.AdvisoryUpdater.Outcome;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -108,6 +112,60 @@ class AdvisoryUpdaterTest {
     @Test
     void fallsBackToJavasProxySettings() {
         assertThat(Download.proxy(Map.of())).isSameAs(ProxySelector.getDefault());
+    }
+
+    @Test
+    void skipsTheDownloadWhileTheAdvisoriesAreRecentEnough() throws IOException {
+        AdvisoryStore store = new AdvisoryStore(home);
+        store.save(AdvisoryStoreTest.DATABASE);
+        Files.setLastModifiedTime(store.file(), FileTime.from(NOW.minus(Duration.ofHours(3))));
+
+        Outcome outcome = updater(store, ok(ARCHIVE, Optional.empty())).updateIfOlderThan(Duration.ofDays(1));
+
+        assertThat(outcome).isEqualTo(new Outcome.Fresh(NOW.minus(Duration.ofHours(3))));
+        assertThat(requests).isEmpty();
+    }
+
+    @Test
+    void downloadsOldAdvisoriesAndRemembersTheAttempt() throws IOException {
+        AdvisoryStore store = new AdvisoryStore(home);
+        store.save(AdvisoryStoreTest.DATABASE);
+        Files.setLastModifiedTime(store.file(), FileTime.from(NOW.minus(Duration.ofDays(3))));
+
+        Outcome outcome = updater(store, ok(ARCHIVE, Optional.empty())).updateIfOlderThan(Duration.ofDays(1));
+
+        assertThat(outcome).isEqualTo(new Outcome.Updated(1));
+        assertThat(store.lastAttempt()).contains(NOW);
+    }
+
+    @Test
+    void waitsAfterAFailedAttemptBeforeTryingAgain() {
+        AdvisoryStore store = new AdvisoryStore(home);
+        Download failing = (uri, known) -> {
+            requests.add(known);
+            throw new IllegalStateException("offline");
+        };
+
+        assertThatThrownBy(() -> updater(store, failing).updateIfOlderThan(Duration.ofDays(1)))
+                .hasMessage("offline");
+        Outcome second = updater(store, failing).updateIfOlderThan(Duration.ofDays(1));
+        Outcome later = new AdvisoryUpdater(
+                        store,
+                        ok(ARCHIVE, Optional.empty()),
+                        Clock.fixed(NOW.plus(AdvisoryUpdater.RETRY_AFTER).plusSeconds(1), ZoneOffset.UTC))
+                .updateIfOlderThan(Duration.ofDays(1));
+
+        assertThat(second).isEqualTo(new Outcome.RecentlyAttempted(NOW));
+        assertThat(later).isEqualTo(new Outcome.Updated(1));
+        assertThat(requests).hasSize(2);
+    }
+
+    @Test
+    void treatsADamagedAttemptRecordAsNoAttempt() throws IOException {
+        AdvisoryStore store = new AdvisoryStore(home);
+        Files.writeString(home.resolve(AdvisoryStore.ATTEMPT_FILE_NAME), "yesterday");
+
+        assertThat(store.lastAttempt()).isEmpty();
     }
 
     AdvisoryUpdater updater(AdvisoryStore store, Download download) {

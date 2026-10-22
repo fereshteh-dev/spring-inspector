@@ -74,7 +74,13 @@ public final class SpringInspector implements Runnable {
                 .addSubcommand(new CheckCommand(inspector, workingDirectory, style, version, out, err))
                 .addSubcommand(new InitCommand(workingDirectory, out, err))
                 .addSubcommand(new UpdateCommand(
-                        () -> new AdvisoryUpdater(advisories, environment).update(), advisories.file(), out, err))
+                        maxAge -> {
+                            AdvisoryUpdater updater = new AdvisoryUpdater(advisories, environment);
+                            return maxAge.map(updater::updateIfOlderThan).orElseGet(updater::update);
+                        },
+                        advisories.file(),
+                        out,
+                        err))
                 .addSubcommand(
                         new InstallHookCommand(new HookInstaller(environment), launcher, workingDirectory, out, err))
                 .setCaseInsensitiveEnumValuesAllowed(true)

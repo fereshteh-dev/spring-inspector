@@ -31,6 +31,7 @@ import java.util.zip.CRC32;
 public final class AdvisoryStore {
 
     static final String FILE_NAME = "osv-maven.bin";
+    static final String ATTEMPT_FILE_NAME = "last-attempt";
     private static final int MAGIC = 0x53494144;
     private static final int FORMAT_VERSION = 1;
 
@@ -52,6 +53,25 @@ public final class AdvisoryStore {
                     : Optional.empty();
         } catch (IOException unreadable) {
             return Optional.empty();
+        }
+    }
+
+    /** When an automatic update was last tried, successful or not. */
+    public Optional<Instant> lastAttempt() {
+        try {
+            return Optional.of(Instant.parse(
+                    Files.readString(directory.resolve(ATTEMPT_FILE_NAME)).strip()));
+        } catch (IOException | RuntimeException missingOrDamaged) {
+            return Optional.empty();
+        }
+    }
+
+    public void recordAttempt(Instant attempt) {
+        try {
+            Files.createDirectories(directory);
+            Files.writeString(directory.resolve(ATTEMPT_FILE_NAME), attempt.toString());
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not write to " + directory, e);
         }
     }
 

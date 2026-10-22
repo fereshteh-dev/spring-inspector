@@ -15,6 +15,9 @@ All notable changes are listed here. The project follows [semantic versioning](h
   and the editor's right-click menu.
 - IntelliJ: plugin icon, "What's new" notes, and the commit check in Settings → Tools → Spring Inspector.
 - Command line: `check --files <file>...` reviews whole files, also outside git.
+- Vulnerability advisories stay current by themselves: the IntelliJ plugin refreshes them in the background when
+  they are a day old, and the git hook runs `update --max-age 1d --quiet` before each check. A failed download waits
+  an hour before the next try.
 - CI checks the plugin with JetBrains' Plugin Verifier against IntelliJ IDEA 2025.1, 2025.2 and 2026.2, and releases
   can publish to the JetBrains Marketplace ([docs/releasing.md](docs/releasing.md)).
 

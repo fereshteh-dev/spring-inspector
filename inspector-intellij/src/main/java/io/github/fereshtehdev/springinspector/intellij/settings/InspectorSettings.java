@@ -33,6 +33,15 @@ public final class InspectorSettings implements PersistentStateComponent<Inspect
         values.checkBeforeCommit = check;
     }
 
+    /** Whether the IDE keeps the vulnerability advisories up to date in the background. */
+    public boolean updateAdvisories() {
+        return values.updateAdvisories;
+    }
+
+    public void setUpdateAdvisories(boolean update) {
+        values.updateAdvisories = update;
+    }
+
     @Override
     public Values getState() {
         return values;
@@ -47,5 +56,6 @@ public final class InspectorSettings implements PersistentStateComponent<Inspect
     public static final class Values {
         public String javaPath = "";
         public boolean checkBeforeCommit = true;
+        public boolean updateAdvisories = true;
     }
 }

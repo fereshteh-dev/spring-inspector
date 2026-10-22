@@ -20,15 +20,12 @@ import java.util.Optional;
 public final class InspectorRunner {
 
     static final Duration TIMEOUT = Duration.ofMinutes(10);
+    static final Duration UPDATE_TIMEOUT = Duration.ofMinutes(5);
 
     private InspectorRunner() {}
 
     public static RunOutcome run(Path project, InspectionScope scope, List<Path> files, ProgressIndicator indicator) {
-        Optional<Path> java = JavaRuntimes.find(
-                InspectorSettings.getInstance().javaPath(),
-                Path.of(System.getProperty("java.home")),
-                Runtime.version().feature(),
-                SystemInfo.isWindows);
+        Optional<Path> java = java();
         if (java.isEmpty()) {
             return new RunOutcome.Failed("Spring Inspector needs Java " + JavaRuntimes.REQUIRED_FEATURE
                     + " or newer, and this IDE runs on Java " + Runtime.version().feature()
@@ -71,6 +68,41 @@ public final class InspectorRunner {
         } catch (IOException ignored) {
             file.toFile().deleteOnExit();
         }
+    }
+
+    /**
+     * Refreshes the vulnerability advisories when they are older than a day.
+     *
+     * @return why it did not work; empty when it worked or was not needed
+     */
+    public static Optional<String> updateAdvisories(ProgressIndicator indicator) {
+        Optional<Path> java = java();
+        Optional<Path> jar = bundledJar();
+        if (java.isEmpty() || jar.isEmpty()) {
+            return Optional.of("Spring Inspector cannot run: no Java " + JavaRuntimes.REQUIRED_FEATURE
+                    + " or the bundled command line is missing");
+        }
+        try {
+            ProcessOutput output = new CapturingProcessHandler(new GeneralCommandLine(
+                                    InspectorCommand.updateAdvisories(java.get(), jar.get()))
+                            .withCharset(StandardCharsets.UTF_8))
+                    .runProcessWithProgressIndicator(indicator, (int) UPDATE_TIMEOUT.toMillis());
+            if (output.getExitCode() == 0 && !output.isTimeout() && !output.isCancelled()) {
+                return Optional.empty();
+            }
+            String detail = output.getStderr().strip();
+            return Optional.of(detail.isEmpty() ? "the update did not finish" : detail);
+        } catch (ExecutionException e) {
+            return Optional.of(String.valueOf(e.getMessage()));
+        }
+    }
+
+    private static Optional<Path> java() {
+        return JavaRuntimes.find(
+                InspectorSettings.getInstance().javaPath(),
+                Path.of(System.getProperty("java.home")),
+                Runtime.version().feature(),
+                SystemInfo.isWindows);
     }
 
     /** The jar in the plugin's {@code cli} folder, next to the {@code lib} folder that holds this class's jar. */

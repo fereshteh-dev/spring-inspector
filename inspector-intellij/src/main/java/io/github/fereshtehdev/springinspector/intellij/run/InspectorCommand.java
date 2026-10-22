@@ -53,6 +53,20 @@ public record InspectorCommand(Path java, Path jar, Path project, InspectionScop
         return List.copyOf(arguments);
     }
 
+    /** Refreshes the vulnerability advisories when they are older than a day; prints only failures. */
+    public static List<String> updateAdvisories(Path java, Path jar) {
+        return List.of(
+                java.toString(),
+                "-Dstdout.encoding=UTF-8",
+                "-Dstderr.encoding=UTF-8",
+                "-jar",
+                jar.toString(),
+                "update",
+                "--max-age",
+                "1d",
+                "--quiet");
+    }
+
     /** The argument file's content: one quoted path per line, with {@code /} separators. */
     public String argumentFileContent() {
         StringBuilder content = new StringBuilder();

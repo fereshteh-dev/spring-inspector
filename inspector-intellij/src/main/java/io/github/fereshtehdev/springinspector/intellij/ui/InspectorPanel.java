@@ -182,6 +182,7 @@ public final class InspectorPanel extends SimpleToolWindowPanel {
             case RunOutcome.Completed completed -> {
                 Report report = completed.report();
                 InspectionResults.getInstance(project).publish(report);
+                AdvisoryRefresh.afterRun(project, report);
                 for (CategoryReport category : report.categories()) {
                     DefaultMutableTreeNode node = new DefaultMutableTreeNode(category);
                     category.findings().forEach(finding -> node.add(new DefaultMutableTreeNode(finding, false)));

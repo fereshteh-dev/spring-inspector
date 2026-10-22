@@ -101,7 +101,7 @@ spring-inspector check [--staged | --base <ref> | --all | --files <file>...] [--
                        [--project <dir>] [--config <file>] [--no-cache]
 spring-inspector init [--project <dir>]
 spring-inspector install-hook [--force] [--project <dir>]
-spring-inspector update
+spring-inspector update [--max-age <age>] [--quiet]
 ```
 
 ### check
@@ -156,7 +156,13 @@ Spring advisories. Later runs download only when the data changed. Behind a prox
 Each finding sits on the line that declares the library and names the lowest version that fixes all of its known
 vulnerabilities. Libraries whose version cannot be worked out are listed, never silently skipped; building the
 project once usually fixes that. Every report shows the date of the advisories and warns when they are more than 7
-days old, so run `update` weekly.
+days old.
+
+You rarely need to run `update` yourself: the IntelliJ plugin refreshes the advisories in the background when they
+are more than a day old (turn this off in **Settings → Tools → Spring Inspector**), and the git hook runs
+`update --max-age 1d --quiet` before each check, which downloads at most once a day and never blocks a commit. A
+failed download is not retried for an hour, so working offline stays fast. Reinstall the hook with `install-hook`
+to get this in hooks installed by older versions.
 
 ## Configuration
 

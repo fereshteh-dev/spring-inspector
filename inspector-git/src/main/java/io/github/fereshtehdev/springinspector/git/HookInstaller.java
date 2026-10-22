@@ -63,7 +63,11 @@ public final class HookInstaller {
             String directory = prefix.value().substring(0, prefix.value().length() - 1);
             script.append("cd -- '").append(directory.replace("'", "'\\''")).append("' || exit 1\n");
         }
-        return script.append("exec ")
+        return script.append(
+                        "# Refresh vulnerability advisories at most once a day; a failed refresh never blocks the commit.\n")
+                .append(command)
+                .append(" update --max-age 1d --quiet || true\n")
+                .append("exec ")
                 .append(command)
                 .append(" check --staged\n")
                 .toString();

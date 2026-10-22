@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,27 @@ public final class AdvisoryUpdater {
         this.store = store;
         this.download = download;
         this.clock = clock;
+    }
+
+    /** After a failed attempt, automatic updates wait this long, so an offline machine is not slowed down each time. */
+    static final Duration RETRY_AFTER = Duration.ofHours(1);
+
+    /**
+     * Updates only when the advisories are older than {@code maxAge}, and not again soon after a failed attempt. Meant
+     * for automatic updates, such as from the git hook or the IDE.
+     */
+    public Outcome updateIfOlderThan(Duration maxAge) {
+        Instant now = clock.instant();
+        Optional<Instant> updated = store.lastUpdated();
+        if (updated.isPresent() && updated.get().isAfter(now.minus(maxAge))) {
+            return new Outcome.Fresh(updated.get());
+        }
+        Optional<Instant> attempted = store.lastAttempt();
+        if (attempted.isPresent() && attempted.get().isAfter(now.minus(RETRY_AFTER))) {
+            return new Outcome.RecentlyAttempted(attempted.get());
+        }
+        store.recordAttempt(now);
+        return update();
     }
 
     public Outcome update() {
@@ -79,11 +101,15 @@ public final class AdvisoryUpdater {
     /** What an update did. */
     public sealed interface Outcome {
 
-        int advisories();
-
         record Updated(int advisories) implements Outcome {}
 
         record UpToDate(int advisories) implements Outcome {}
+
+        /** Not downloaded: the advisories are newer than the maximum age. */
+        record Fresh(Instant updatedAt) implements Outcome {}
+
+        /** Not downloaded: an attempt failed a short while ago. */
+        record RecentlyAttempted(Instant attemptedAt) implements Outcome {}
     }
 
     /** One HTTP download, behind an interface so tests run without a network. */

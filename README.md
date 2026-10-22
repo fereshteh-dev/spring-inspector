@@ -67,7 +67,7 @@ java -jar spring-inspector.jar check --base main             # review everything
 java -jar spring-inspector.jar check --files src/main/java/com/acme/Orders.java   # review whole files
 java -jar spring-inspector.jar check --details security      # explain every finding of one category
 java -jar spring-inspector.jar install-hook                  # review every commit automatically
-java -jar spring-inspector.jar update                        # download vulnerability advisories (do this weekly)
+java -jar spring-inspector.jar update                        # download vulnerability advisories now
 ```
 
 The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and troubleshooting.
@@ -86,8 +86,9 @@ The [user guide](docs/user-guide.md) covers every command, CI with SARIF, and tr
 
 ### Vulnerable dependencies
 
-Run `update` once (and then weekly) to download the public vulnerability advisories from [OSV.dev](https://osv.dev),
-which include the GitHub and Spring advisories. After that, checks work offline. Spring Inspector reads your
+The public vulnerability advisories from [OSV.dev](https://osv.dev), which include the GitHub and Spring advisories,
+are downloaded and kept current automatically: the IntelliJ plugin and the git hook refresh them once a day, and
+`update` does it on demand. Checks themselves work offline. Spring Inspector reads your
 dependencies without running your build: from `pom.xml` and Gradle files, from parents and BOMs such as Spring Boot's,
 and from an application jar you have already built. Every report says how old the advisories are.
 

@@ -15,6 +15,8 @@ public final class InspectorConfigurable implements Configurable {
 
     private final JBTextField javaPath = new JBTextField();
     private final JBCheckBox checkBeforeCommit = new JBCheckBox("Check commits made from the IDE");
+    private final JBCheckBox updateAdvisories = new JBCheckBox(
+            "Keep vulnerability advisories up to date (downloads public data daily; nothing about your project is sent)");
 
     @Override
     public String getDisplayName() {
@@ -32,6 +34,7 @@ public final class InspectorConfigurable implements Configurable {
                 .addLabeledComponent("Java " + JavaRuntimes.REQUIRED_FEATURE + "+ home or executable:", javaPath)
                 .addComponentToRightColumn(hint)
                 .addComponent(checkBeforeCommit)
+                .addComponent(updateAdvisories)
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
     }
@@ -40,18 +43,21 @@ public final class InspectorConfigurable implements Configurable {
     public boolean isModified() {
         InspectorSettings settings = InspectorSettings.getInstance();
         return !javaPath.getText().strip().equals(settings.javaPath())
-                || checkBeforeCommit.isSelected() != settings.checkBeforeCommit();
+                || checkBeforeCommit.isSelected() != settings.checkBeforeCommit()
+                || updateAdvisories.isSelected() != settings.updateAdvisories();
     }
 
     @Override
     public void apply() {
         InspectorSettings.getInstance().setJavaPath(javaPath.getText());
         InspectorSettings.getInstance().setCheckBeforeCommit(checkBeforeCommit.isSelected());
+        InspectorSettings.getInstance().setUpdateAdvisories(updateAdvisories.isSelected());
     }
 
     @Override
     public void reset() {
         javaPath.setText(InspectorSettings.getInstance().javaPath());
         checkBeforeCommit.setSelected(InspectorSettings.getInstance().checkBeforeCommit());
+        updateAdvisories.setSelected(InspectorSettings.getInstance().updateAdvisories());
     }
 }

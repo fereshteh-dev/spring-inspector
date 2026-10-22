@@ -50,6 +50,7 @@ class HookInstallerTest {
                 .startsWith("#!/bin/sh\n")
                 .contains(HookInstaller.MARKER)
                 .contains("--no-verify")
+                .contains("spring-inspector update --max-age 1d --quiet || true\n")
                 .endsWith("exec spring-inspector check --staged\n")
                 .doesNotContain("\r");
     }
