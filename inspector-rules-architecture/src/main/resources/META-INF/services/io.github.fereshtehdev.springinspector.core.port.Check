@@ -1,3 +1,5 @@
 io.github.fereshtehdev.springinspector.rules.architecture.LayerViolationCheck
 io.github.fereshtehdev.springinspector.rules.architecture.PackageCycleCheck
 io.github.fereshtehdev.springinspector.rules.architecture.DomainFrameworkCheck
+io.github.fereshtehdev.springinspector.rules.architecture.FeatureInternalsCheck
+io.github.fereshtehdev.springinspector.rules.architecture.NewFeatureDependencyCheck

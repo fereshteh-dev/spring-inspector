@@ -19,7 +19,7 @@ import tools.jackson.databind.node.ObjectNode;
 /** The report card as JSON, with an explicit schema rather than serialized domain objects, so it stays stable. */
 public final class JsonRenderer implements ReportRenderer {
 
-    static final JsonMapper MAPPER =
+    public static final JsonMapper MAPPER =
             JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT).build();
 
     private final String toolVersion;

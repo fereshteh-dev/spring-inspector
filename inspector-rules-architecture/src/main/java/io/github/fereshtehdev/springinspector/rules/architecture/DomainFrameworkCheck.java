@@ -103,12 +103,12 @@ public final class DomainFrameworkCheck implements Check {
         return findings;
     }
 
-    private static boolean isDomain(String packageName) {
+    static boolean isDomain(String packageName) {
         List<String> segments = Packages.segments(packageName);
         return segments.contains("domain") && segments.stream().noneMatch(OUTER_SEGMENTS::contains);
     }
 
-    private static Optional<String> framework(String imported) {
+    static Optional<String> framework(String imported) {
         return FRAMEWORKS.entrySet().stream()
                 .filter(entry -> (imported + ".").startsWith(entry.getKey()))
                 .map(Map.Entry::getValue)

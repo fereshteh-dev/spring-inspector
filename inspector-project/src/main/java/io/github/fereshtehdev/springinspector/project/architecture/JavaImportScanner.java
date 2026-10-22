@@ -49,7 +49,6 @@ public final class JavaImportScanner {
                             file.getFileName() == null ? "" : file.getFileName().toString();
                     if (attributes.isRegularFile()
                             && name.endsWith(".java")
-                            && !name.equals("package-info.java")
                             && !name.equals("module-info.java")
                             && attributes.size() <= MAX_FILE_BYTES) {
                         read(projectRoot, file).ifPresent(units::add);

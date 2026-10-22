@@ -15,7 +15,9 @@ import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -55,28 +57,34 @@ public final class LayerViolationCheck implements Check {
         if (!ArchitectureFindings.touchesJava(input)) {
             return List.of();
         }
+        Map<Layer, Set<Layer>> declared =
+                DeclaredLayers.read(input.project().config().options(ID));
         Architecture architecture = new Architecture(graphs.apply(input.project()));
         List<Finding> findings = new ArrayList<>();
         for (JavaUnit unit : architecture.units()) {
             Layer from = architecture.layer(unit);
             for (Architecture.Use use : architecture.uses(unit)) {
-                violation(from, architecture.layer(use.to()), unit, use.to())
-                        .map(violation -> ArchitectureFindings.onImport(
+                Layer to = architecture.layer(use.to());
+                Optional<Violation> violation = declared.containsKey(from)
+                        ? DeclaredLayers.violation(declared, from, to, unit, use.to())
+                        : violation(from, to, unit, use.to());
+                violation
+                        .map(found -> ArchitectureFindings.onImport(
                                 ID,
-                                violation.severity(),
+                                found.severity(),
                                 Confidence.MEDIUM,
                                 unit,
                                 use.statement(),
-                                violation.description(),
-                                new WhyItMatters(violation.why(), List.of(LAYERS)),
-                                violation.howToFix()))
+                                found.description(),
+                                new WhyItMatters(found.why(), List.of(LAYERS)),
+                                found.howToFix()))
                         .ifPresent(findings::add);
             }
         }
         return findings;
     }
 
-    private static Optional<Violation> violation(Layer from, Layer to, JavaUnit unit, JavaUnit target) {
+    static Optional<Violation> violation(Layer from, Layer to, JavaUnit unit, JavaUnit target) {
         String user = unit.typeName();
         String used = target.typeName();
         return switch (from) {
@@ -126,5 +134,5 @@ public final class LayerViolationCheck implements Check {
         };
     }
 
-    private record Violation(Severity severity, String description, String why, String howToFix) {}
+    record Violation(Severity severity, String description, String why, String howToFix) {}
 }

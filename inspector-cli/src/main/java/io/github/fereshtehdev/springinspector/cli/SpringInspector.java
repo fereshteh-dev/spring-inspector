@@ -16,7 +16,9 @@ import io.github.fereshtehdev.springinspector.project.BuildFileProjectDetector;
 import io.github.fereshtehdev.springinspector.project.architecture.JavaImportScanner;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;
 import io.github.fereshtehdev.springinspector.rules.architecture.DomainFrameworkCheck;
+import io.github.fereshtehdev.springinspector.rules.architecture.FeatureInternalsCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.LayerViolationCheck;
+import io.github.fereshtehdev.springinspector.rules.architecture.NewFeatureDependencyCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.PackageCycleCheck;
 import io.github.fereshtehdev.springinspector.rules.spring.JavaSupportCheck;
 import io.github.fereshtehdev.springinspector.rules.spring.NewerPatchCheck;
@@ -92,6 +94,8 @@ public final class SpringInspector implements Runnable {
         CommandLine commandLine = new CommandLine(new SpringInspector(err))
                 .addSubcommand(new CheckCommand(inspector, workingDirectory, style, version, out, err))
                 .addSubcommand(new InitCommand(workingDirectory, out, err))
+                .addSubcommand(new ArchitectureCommand(
+                        workingDirectory, new BuildFileProjectDetector(), JavaImportScanner::scan, style, out))
                 .addSubcommand(new UpdateCommand(
                         maxAge -> {
                             AdvisoryUpdater updater = new AdvisoryUpdater(advisories, environment);
@@ -140,8 +144,12 @@ public final class SpringInspector implements Runnable {
 
     /** Architecture rules read the map of the whole project, scanned once per run and shared between them. */
     static List<Check> withProjectMap(List<Check> checks, Function<ProjectContext, ImportGraph> maps) {
-        List<Check> replacements =
-                List.of(new LayerViolationCheck(maps), new PackageCycleCheck(maps), new DomainFrameworkCheck(maps));
+        List<Check> replacements = List.of(
+                new LayerViolationCheck(maps),
+                new PackageCycleCheck(maps),
+                new DomainFrameworkCheck(maps),
+                new FeatureInternalsCheck(maps),
+                new NewFeatureDependencyCheck(maps));
         return checks.stream()
                 .map(check -> replacements.stream()
                         .filter(replacement -> replacement.id().equals(check.id()))

@@ -48,7 +48,9 @@ class ReleaseCalendarWiringTest {
                 .contains(
                         RuleId.of("architecture.layer-violation"),
                         RuleId.of("architecture.package-cycle"),
-                        RuleId.of("architecture.domain-depends-on-framework"));
+                        RuleId.of("architecture.domain-depends-on-framework"),
+                        RuleId.of("architecture.feature-internals"),
+                        RuleId.of("architecture.new-feature-dependency"));
         assertThat(wired).hasSameSizeAs(registered);
     }
 

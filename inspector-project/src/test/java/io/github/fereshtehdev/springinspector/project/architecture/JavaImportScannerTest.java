@@ -29,7 +29,7 @@ class JavaImportScannerTest {
 
         assertThat(graph.units())
                 .extracting(JavaUnit::qualifiedName)
-                .containsExactlyInAnyOrder("com.acme.App", "com.acme.web.Api", "docs.Example");
+                .containsExactlyInAnyOrder("com.acme.App", "com.acme.web.Api", "com.acme.package-info", "docs.Example");
         assertThat(graph.unit("com.acme.App"))
                 .hasValueSatisfying(
                         app -> assertThat(app.file()).isEqualTo(Path.of("src/main/java/com/acme/App.java")));
