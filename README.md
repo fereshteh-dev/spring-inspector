@@ -27,6 +27,8 @@ Spring Inspector  score 60/100
   Vulnerability advisories from 2026-10-21
 ```
 
+How it works, with diagrams: [docs/architecture.md](docs/architecture.md).
+
 ## Install
 
 Download the latest release from
@@ -131,6 +133,7 @@ IntelliJ plugin. Next come the JetBrains Marketplace, architecture rules, and pu
 
 - [User guide](docs/user-guide.md): installation, commands, configuration, CI, troubleshooting
 - [Rule catalogue](docs/rules/README.md)
+- [Architecture](docs/architecture.md): how it works, with diagrams
 - [Specification](docs/SPEC.md) and [architecture decisions](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md), [releasing](docs/releasing.md) and [security policy](SECURITY.md)
 
