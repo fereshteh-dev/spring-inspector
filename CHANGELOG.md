@@ -2,7 +2,7 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
-## [Unreleased]
+## [0.4.0] - 2026-10-22
 
 ### Added
 
@@ -11,6 +11,10 @@ All notable changes are listed here. The project follows [semantic versioning](h
   `spring.remote-call-in-transaction`, `spring.http-client-without-timeout` (with a fix for the JDK client),
   `spring.eager-fetch` and `spring.lombok-data-entity`.
 - [Writing a rule](docs/writing-a-rule.md): a step-by-step guide to adding your own rule.
+
+### Changed
+
+- The README describes every network access, the right-click and Architecture actions, and the current status.
 
 ## [0.3.0] - 2026-10-22
 
