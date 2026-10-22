@@ -1,6 +1,7 @@
 package io.github.fereshtehdev.springinspector.javamodel;
 
 import com.github.javaparser.ast.Node;
+import io.github.fereshtehdev.springinspector.core.domain.Category;
 import io.github.fereshtehdev.springinspector.core.domain.Confidence;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
 import io.github.fereshtehdev.springinspector.core.domain.FindingSource;
@@ -12,6 +13,7 @@ import io.github.fereshtehdev.springinspector.core.domain.change.FileChange;
 import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
 import io.github.fereshtehdev.springinspector.core.port.Check;
 import io.github.fereshtehdev.springinspector.core.port.InspectionInput;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +30,7 @@ public abstract class JavaCheck implements Check {
         RuleOptions options = input.project().config().options(id());
         List<Finding> findings = new ArrayList<>();
         for (FileChange change : input.changeSet().files()) {
-            if (change.path().toString().endsWith(".java")) {
+            if (change.path().toString().endsWith(".java") && (inspectsTestSources() || !isTestSource(change.path()))) {
                 findings.addAll(model.findings(this, change.path(), options));
             }
         }
@@ -36,6 +38,25 @@ public abstract class JavaCheck implements Check {
     }
 
     protected abstract List<Finding> inspect(JavaFile file);
+
+    /**
+     * Whether the check also looks at test code. Clean-code checks do not by default: long test methods, catch-alls
+     * and large test classes are normal in tests and would bury the findings in production code.
+     */
+    protected boolean inspectsTestSources() {
+        return category() != Category.CLEAN_CODE;
+    }
+
+    /** A file under a {@code src/test} folder, as Maven and Gradle lay out test code. */
+    public static boolean isTestSource(Path path) {
+        for (int i = 0; i + 1 < path.getNameCount(); i++) {
+            if (path.getName(i).toString().equals("src")
+                    && path.getName(i + 1).toString().equals("test")) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     protected final Finding finding(
             JavaFile file,

@@ -51,6 +51,33 @@ class SqlStringConcatenationCheckTest {
     }
 
     @Test
+    void acceptsQueriesBuiltOnlyFromNumbersButNotFromText() {
+        List<Finding> findings = CheckTester.of(check).source("""
+                        package com.acme;
+
+                        import java.util.UUID;
+
+                        class Cleanup {
+                            void delete(java.sql.Statement statement, Integer petId, long ownerId, UUID token, String name)
+                                    throws java.sql.SQLException {
+                                statement.executeUpdate("DELETE FROM pet WHERE id=" + petId);
+                                statement.executeUpdate("DELETE FROM owner WHERE id=" + ownerId + " AND active=" + true);
+                                statement.executeUpdate("DELETE FROM session WHERE token='" + token + "'");
+                                String visitId = petId.toString();
+                                statement.executeUpdate("DELETE FROM visit WHERE id=" + visitId);
+                                statement.executeUpdate("DELETE FROM visit WHERE pet=" + String.valueOf(ownerId));
+                                statement.executeUpdate("DELETE FROM pet WHERE name='" + name + "' AND id=" + petId);
+                            }
+                        }
+                        """).findings();
+
+        assertThat(findings)
+                .singleElement()
+                .satisfies(finding ->
+                        assertThat(finding.location().lines().start()).isEqualTo(14));
+    }
+
+    @Test
     void ignoresBuiltStringsThatDoNotLookLikeSql() {
         List<Finding> findings = CheckTester.of(check).source("""
                         package com.acme;

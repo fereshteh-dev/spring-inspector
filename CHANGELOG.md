@@ -20,6 +20,18 @@ All notable changes are listed here. The project follows [semantic versioning](h
 
 - Spring Inspector's own code has no package cycles any more: its architecture check found three, now fixed.
 
+### Fixed
+
+Found by running every rule on Spring PetClinic, PetClinic REST and BuckPal and reviewing each finding (45 findings
+before, 14 after, with no false alarms left in that sample):
+
+- `security.sql-concatenation` no longer reports queries built only from numbers, booleans or UUIDs, including
+  `id.toString()` and `String.valueOf(id)`; such values cannot inject SQL.
+- Clean-code rules no longer report test code (`src/test`), where long test methods and catch-alls are normal.
+- `security.csrf-disabled` no longer reports a security chain that permits every request and has no login.
+- `cleancode.unused-private` treats fields read by Lombok-generated code, JPA or `@ConfigurationProperties` as used.
+- The architecture report lists dependencies in the same order on every run.
+
 ## [0.2.0] - 2026-10-22
 
 ### Added

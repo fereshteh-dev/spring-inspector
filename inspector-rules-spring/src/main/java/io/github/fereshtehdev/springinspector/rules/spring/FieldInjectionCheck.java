@@ -18,7 +18,6 @@ import io.github.fereshtehdev.springinspector.javamodel.JavaCheck;
 import io.github.fereshtehdev.springinspector.javamodel.JavaFile;
 import io.github.fereshtehdev.springinspector.javamodel.patch.TextEdit;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +59,7 @@ public final class FieldInjectionCheck extends JavaCheck {
 
     @Override
     protected List<Finding> inspect(JavaFile file) {
-        if (isTestSource(file.path())) {
+        if (JavaCheck.isTestSource(file.path())) {
             return List.of();
         }
         List<Finding> findings = new ArrayList<>();
@@ -171,16 +170,6 @@ public final class FieldInjectionCheck extends JavaCheck {
                 .map(annotation -> file.annotation(field, annotation))
                 .flatMap(Optional::stream)
                 .findFirst();
-    }
-
-    private static boolean isTestSource(Path path) {
-        for (int i = 0; i + 1 < path.getNameCount(); i++) {
-            if (path.getName(i).toString().equals("src")
-                    && path.getName(i + 1).toString().equals("test")) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static boolean isTestClass(ClassOrInterfaceDeclaration type) {

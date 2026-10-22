@@ -3,6 +3,7 @@ package io.github.fereshtehdev.springinspector.rules.architecture;
 import io.github.fereshtehdev.springinspector.core.domain.architecture.ImportGraph;
 import io.github.fereshtehdev.springinspector.core.domain.architecture.JavaUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,7 +80,8 @@ public record ArchitectureReport(
     public record Part(String name, int classes, Map<String, Integer> dependsOn) {
 
         public Part {
-            dependsOn = Map.copyOf(dependsOn);
+            // Sorted, so the report and its diagram come out the same on every run.
+            dependsOn = Collections.unmodifiableMap(new TreeMap<>(dependsOn));
         }
     }
 

@@ -2,6 +2,7 @@ package io.github.fereshtehdev.springinspector.rules.cleancode;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.BodyDeclaration;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
@@ -18,6 +19,7 @@ import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.WhyItMatters;
 import io.github.fereshtehdev.springinspector.javamodel.JavaCheck;
 import io.github.fereshtehdev.springinspector.javamodel.JavaFile;
+import io.github.fereshtehdev.springinspector.javamodel.Nodes;
 import io.github.fereshtehdev.springinspector.javamodel.patch.TextEdit;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -84,6 +86,25 @@ public final class UnusedPrivateCheck extends JavaCheck {
                 HowToFix.withPatch("Delete it.", file.patch(edits)));
     }
 
+    /** Class annotations under which fields are read by generated or framework code. */
+    private static final Set<String> FRAMEWORK_ANNOTATIONS = Set.of(
+            "Data",
+            "Value",
+            "Getter",
+            "Setter",
+            "Builder",
+            "SuperBuilder",
+            "AllArgsConstructor",
+            "RequiredArgsConstructor",
+            "EqualsAndHashCode",
+            "ToString",
+            "With",
+            "Entity",
+            "Embeddable",
+            "MappedSuperclass",
+            "Document",
+            "ConfigurationProperties");
+
     private static boolean isCandidate(BodyDeclaration<?> member) {
         String name = switch (member) {
             case FieldDeclaration field ->
@@ -91,7 +112,22 @@ public final class UnusedPrivateCheck extends JavaCheck {
             case MethodDeclaration method -> method.isPrivate() ? method.getNameAsString() : "";
             default -> "";
         };
-        return !name.isEmpty() && member.getAnnotations().isEmpty() && !SERIALIZATION.contains(name);
+        return !name.isEmpty()
+                && member.getAnnotations().isEmpty()
+                && !SERIALIZATION.contains(name)
+                && !(member instanceof FieldDeclaration && readByFramework(member));
+    }
+
+    /**
+     * A field that code nobody wrote reads: through accessors Lombok generates, or because JPA persists it or Spring
+     * binds it to configuration. Such a field is used even when no source line mentions it.
+     */
+    private static boolean readByFramework(BodyDeclaration<?> field) {
+        return Nodes.ancestor(field, ClassOrInterfaceDeclaration.class)
+                .map(type -> type.getAnnotations().stream()
+                        .anyMatch(annotation -> FRAMEWORK_ANNOTATIONS.contains(
+                                annotation.getName().getIdentifier())))
+                .orElse(false);
     }
 
     private static Set<String> referencedNames(JavaFile file) {

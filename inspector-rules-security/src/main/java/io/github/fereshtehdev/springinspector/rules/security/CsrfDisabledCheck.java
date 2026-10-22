@@ -15,6 +15,7 @@ import io.github.fereshtehdev.springinspector.javamodel.JavaCheck;
 import io.github.fereshtehdev.springinspector.javamodel.JavaFile;
 import io.github.fereshtehdev.springinspector.javamodel.Nodes;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * CSRF protection switched off in a security configuration that keeps login sessions. Stateless APIs, configured
@@ -52,6 +53,7 @@ public final class CsrfDisabledCheck extends JavaCheck {
     protected List<Finding> inspect(JavaFile file) {
         return file.unit().findAll(MethodCallExpr.class, CsrfDisabledCheck::disablesCsrf).stream()
                 .filter(call -> !isStateless(scopeOf(call)))
+                .filter(call -> !hasNothingToForge(scopeOf(call)))
                 .map(call -> finding(
                         file,
                         call.getArguments().isEmpty() ? call : call.getArgument(0),
@@ -83,6 +85,25 @@ public final class CsrfDisabledCheck extends JavaCheck {
                         .isPresent();
     }
 
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /** Signs that a security chain authenticates users or restricts what they may do. */
+    private static final List<String> AUTHENTICATION = List.of(
+            "authenticated()",
+            "hasRole(",
+            "hasAnyRole(",
+            "hasAuthority(",
+            "hasAnyAuthority(",
+            ".access(",
+            "httpBasic",
+            "formLogin",
+            "oauth2Login",
+            "saml2Login",
+            "rememberMe",
+            "x509",
+            "oneTimeTokenLogin",
+            "webAuthn");
+
     private static Node scopeOf(MethodCallExpr call) {
         return Nodes.ancestor(call, MethodDeclaration.class)
                 .<Node>map(method -> method)
@@ -92,6 +113,16 @@ public final class CsrfDisabledCheck extends JavaCheck {
     private static boolean isStateless(Node scope) {
         String text = scope.toString();
         return text.contains("SessionCreationPolicy.STATELESS") || text.contains("oauth2ResourceServer");
+    }
+
+    /**
+     * Every request is permitted and nothing logs users in: no request carries credentials an attacker could ride on,
+     * so CSRF protection would protect nothing.
+     */
+    private static boolean hasNothingToForge(Node scope) {
+        String text = WHITESPACE.matcher(scope.toString()).replaceAll("");
+        return text.contains(".anyRequest().permitAll()")
+                && AUTHENTICATION.stream().noneMatch(text::contains);
     }
 
     private static boolean usesFormLogin(Node scope) {

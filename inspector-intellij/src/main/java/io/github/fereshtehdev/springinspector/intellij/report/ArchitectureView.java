@@ -1,5 +1,6 @@
 package io.github.fereshtehdev.springinspector.intellij.report;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,8 @@ public record ArchitectureView(
     public record Part(String name, int classes, Map<String, Integer> dependsOn) {
 
         public Part {
-            dependsOn = Map.copyOf(dependsOn);
+            // In the report's order, which Map.copyOf would shuffle.
+            dependsOn = Collections.unmodifiableMap(new LinkedHashMap<>(dependsOn));
         }
     }
 

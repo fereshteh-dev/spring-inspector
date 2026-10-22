@@ -79,6 +79,28 @@ class SpringSecurityConfigurationRulesTest {
                             .findings())
                     .isEmpty();
         }
+
+        @Test
+        void acceptsAChainWithNothingToForgeButNotOneThatLogsUsersIn() {
+            String open = """
+                    package com.acme;
+
+                    class OpenSecurity {
+                        SecurityFilterChain chain(HttpSecurity http) throws Exception {
+                            http.csrf(AbstractHttpConfigurer::disable)
+                                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+                            return http.build();
+                        }
+                    }
+                    """;
+
+            assertThat(CheckTester.of(check).source(open).findings()).isEmpty();
+            assertThat(CheckTester.of(check)
+                            .source(open.replace(
+                                    ".permitAll());", ".permitAll()).httpBasic(Customizer.withDefaults());"))
+                            .findings())
+                    .hasSize(1);
+        }
     }
 
     @Nested

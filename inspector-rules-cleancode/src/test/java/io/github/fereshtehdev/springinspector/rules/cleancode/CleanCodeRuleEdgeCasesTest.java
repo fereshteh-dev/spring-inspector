@@ -205,4 +205,53 @@ class CleanCodeRuleEdgeCasesTest {
                         .findings())
                 .isEmpty();
     }
+
+    @Test
+    void leavesTestCodeAloneButReviewsProductionCode() {
+        String source = """
+                package com.acme;
+
+                class Orders {
+                    void check() {
+                        try {
+                            run();
+                        } catch (Exception e) {
+                            report(e);
+                        }
+                    }
+
+                    void run() {}
+
+                    void report(Exception e) {}
+                }
+                """;
+
+        assertThat(CheckTester.of(new GenericCatchCheck())
+                        .file("src/test/java/com/acme/Orders.java", source)
+                        .findings())
+                .isEmpty();
+        assertThat(CheckTester.of(new GenericCatchCheck())
+                        .file("src/main/java/com/acme/Orders.java", source)
+                        .findings())
+                .hasSize(1);
+    }
+
+    static final String SETTINGS = """
+            class Settings {
+                private long threshold = 10;
+            }
+            """;
+
+    @Test
+    void treatsFieldsThatLombokJpaOrSpringReadAsUsed() {
+        for (String annotation : List.of("@lombok.Data", "@Value", "@Entity", "@ConfigurationProperties(\"shop\")")) {
+            String source = annotation + "\n" + SETTINGS;
+
+            assertThat(CheckTester.of(new UnusedPrivateCheck()).source(source).findings())
+                    .as(annotation)
+                    .isEmpty();
+        }
+        assertThat(CheckTester.of(new UnusedPrivateCheck()).source(SETTINGS).findings())
+                .hasSize(1);
+    }
 }

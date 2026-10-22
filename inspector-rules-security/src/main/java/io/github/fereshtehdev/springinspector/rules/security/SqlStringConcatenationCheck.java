@@ -56,6 +56,25 @@ public final class SqlStringConcatenationCheck extends JavaCheck {
             "java.sql.",
             "org.hibernate.");
 
+    private static final Set<String> INJECTION_FREE_TYPES = Set.of(
+            "int",
+            "long",
+            "short",
+            "byte",
+            "double",
+            "float",
+            "boolean",
+            "java.lang.Integer",
+            "java.lang.Long",
+            "java.lang.Short",
+            "java.lang.Byte",
+            "java.lang.Double",
+            "java.lang.Float",
+            "java.lang.Boolean",
+            "java.math.BigDecimal",
+            "java.math.BigInteger",
+            "java.util.UUID");
+
     private static final Pattern SQL = Pattern.compile(
             "\\b(select\\b.*\\bfrom|insert\\s+into|update\\s+\\S+\\s+set|delete\\s+from|merge\\s+into|where\\b|order\\s+by)",
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -100,6 +119,9 @@ public final class SqlStringConcatenationCheck extends JavaCheck {
                     || !SQL.matcher(StringExpressions.literalText(query)).find()) {
                 continue;
             }
+            if (onlyInjectionFreeValues(file, StringExpressions.runtimeValues(query))) {
+                continue;
+            }
             confidence(file, call)
                     .ifPresent(confidence -> findings.add(finding(
                             file,
@@ -111,6 +133,37 @@ public final class SqlStringConcatenationCheck extends JavaCheck {
                             FIX)));
         }
         return findings;
+    }
+
+    /**
+     * Numbers, booleans and UUIDs cannot carry SQL: a query built only from them, such as {@code "... WHERE id=" + id},
+     * is not an injection risk. Text, and anything whose type cannot be resolved, still is.
+     */
+    private static boolean onlyInjectionFreeValues(JavaFile file, List<Expression> values) {
+        return !values.isEmpty() && values.stream().allMatch(value -> isInjectionFree(file, value));
+    }
+
+    /** A number, boolean or UUID, also once turned into text with {@code toString()} or {@code String.valueOf}. */
+    private static boolean isInjectionFree(JavaFile file, Expression value) {
+        if (hasInjectionFreeType(file, value)) {
+            return true;
+        }
+        if (!(StringExpressions.followLocal(value) instanceof MethodCallExpr call)) {
+            return false;
+        }
+        String name = call.getNameAsString();
+        if (name.equals("toString") && call.getArguments().isEmpty()) {
+            return call.getScope()
+                    .filter(scope -> hasInjectionFreeType(file, scope))
+                    .isPresent();
+        }
+        return (name.equals("valueOf") || name.equals("toString"))
+                && call.getArguments().size() == 1
+                && hasInjectionFreeType(file, call.getArgument(0));
+    }
+
+    private static boolean hasInjectionFreeType(JavaFile file, Expression expression) {
+        return file.typeOf(expression).filter(INJECTION_FREE_TYPES::contains).isPresent();
     }
 
     /** HIGH when the call resolves to a database API, MEDIUM when it cannot be resolved, empty for other APIs. */

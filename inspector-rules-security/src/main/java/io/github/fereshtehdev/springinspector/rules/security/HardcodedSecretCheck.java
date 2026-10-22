@@ -14,7 +14,6 @@ import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.WhyItMatters;
 import io.github.fereshtehdev.springinspector.javamodel.JavaCheck;
 import io.github.fereshtehdev.springinspector.javamodel.JavaFile;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +50,7 @@ public final class HardcodedSecretCheck extends JavaCheck {
 
     @Override
     protected List<Finding> inspect(JavaFile file) {
-        if (isTestSource(file.path())) {
+        if (JavaCheck.isTestSource(file.path())) {
             return List.of();
         }
         List<Finding> findings = new ArrayList<>();
@@ -104,15 +103,5 @@ public final class HardcodedSecretCheck extends JavaCheck {
             case AssignExpr assign -> Optional.of(assign.getTarget().toString());
             default -> Optional.empty();
         });
-    }
-
-    static boolean isTestSource(Path path) {
-        for (int i = 0; i + 1 < path.getNameCount(); i++) {
-            if (path.getName(i).toString().equals("src")
-                    && path.getName(i + 1).toString().equals("test")) {
-                return true;
-            }
-        }
-        return false;
     }
 }
