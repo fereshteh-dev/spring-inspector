@@ -57,7 +57,8 @@ public final class SsrfCheck extends JavaCheck {
 
     private static final HowToFix FIX = HowToFix.withoutPatch(
             "Keep the scheme and host fixed in code or configuration and put request values only into the path or"
-                    + " query through URI templates. If the host must vary, check it against an allow-list.");
+                    + " query through URI templates. If the host must vary, check it against an allow-list. From Spring"
+                    + " Boot 4.1, an InetAddressFilter on the HTTP client can also block internal addresses.");
 
     @Override
     public RuleId id() {

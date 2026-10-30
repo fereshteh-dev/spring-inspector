@@ -1,0 +1,13 @@
+server:
+  error:
+    include-stacktrace: never
+    include-exception: false
+    include-message: on_param
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+server:
+  error:
+    include-stacktrace: always

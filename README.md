@@ -44,7 +44,7 @@ class Checkout {
 > **How to fix it:** put @Transactional on the method that is called from outside, or move the transactional method
 > into its own bean and call it through that bean.
 
-A few more of its **63 rules**:
+A few more of its **79 rules**:
 
 | | |
 |---|---|

@@ -5,6 +5,7 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.Problem;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.printer.DefaultPrettyPrinter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import io.github.fereshtehdev.springinspector.core.domain.Finding;
 import io.github.fereshtehdev.springinspector.core.domain.ProjectPath;
@@ -64,7 +65,10 @@ public final class JavaModel implements SourceProvider {
         List<Path> sourceRoots = SourceRoots.of(project);
         // Built on first parse: a run answered entirely from the cache never loads the parser or symbol solver, whose
         // language-level enum alone instantiates a validator for every Java release.
+        // Without line separator detection, Node.toString() does not rewrite the printer's shared settings, which
+        // would break checks printing nodes of the same file in parallel.
         this.configuration = new Lazy<>(() -> new ParserConfiguration()
+                .setDetectOriginalLineSeparator(false)
                 .setLanguageLevel(LanguageLevels.forJava(project.versions().java()))
                 .setSymbolResolver(new JavaSymbolSolver(new ProjectTypeSolver(sourceRoots, this::parseAsDependency))));
         this.context = "java" + LanguageLevels.feature(project.versions().java()) + ";" + project.versions() + ";jdk"
@@ -175,6 +179,9 @@ public final class JavaModel implements SourceProvider {
             ParseResult<CompilationUnit> result = new JavaParser(configuration.get()).parse(source.content());
             Optional<CompilationUnit> unit = result.getResult();
             if (result.isSuccessful() && unit.isPresent()) {
+                // Set here because the unit would otherwise create it during the first toString(), possibly in
+                // parallel.
+                unit.get().printer(new DefaultPrettyPrinter());
                 return Optional.of(new ParsedUnit(source, unit.get(), LineIndex.of(source.content())));
             }
             unparseable.put(

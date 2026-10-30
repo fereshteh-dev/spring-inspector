@@ -1,0 +1,17 @@
+spring:
+  ai:
+    openai:
+      chat:
+        internal-tool-execution-enabled: false
+        options:
+          model: gpt-5
+    ollama:
+      chat:
+        think-option: true
+    chat:
+      memory:
+        redis:
+          host: localhost
+      client:
+        tool-calling:
+          stream-tool-call-responses: true

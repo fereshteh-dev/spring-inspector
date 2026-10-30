@@ -2,6 +2,32 @@
 
 All notable changes are listed here. The project follows [semantic versioning](https://semver.org).
 
+## [Unreleased]
+
+### Added
+
+- Eight security rules (79 rules in all): `security.command-injection`, `security.spel-injection`,
+  `security.open-redirect`, `security.cors-any-origin-with-credentials`, `security.plaintext-password`,
+  `security.tls-verification-disabled`, `security.error-details-exposed` and `security.insecure-session-cookie`.
+- Four Spring AI rules for tool safety: `springai.tool-guardrail-disabled`, `springai.tool-resolution-fallback`,
+  `springai.identity-from-model` and `springai.tool-without-description`.
+- Two Spring AI 2.0 migration rules: `migration.spring-ai-2-removed-usage` and `migration.spring-ai-2-settings`.
+- Two architecture rules: `architecture.hexagonal-direction` and `architecture.ai-in-web-layer`.
+
+### Changed
+
+- `migration.spring-ai-1x-api` also reports the removed MCP client customizers, `AnthropicApi` and the old
+  `org.springaicommunity.mcp` packages.
+- `security.ssrf` mentions Spring Boot 4.1's `InetAddressFilter` in its advice.
+
+### Fixed
+
+- Checks no longer fail at random with `ConcurrentModificationException` or `NoSuchElementException` on real projects.
+  Each run lost the findings of the checks that failed, which were reported only as problems in the output.
+- `security.ssrf` and `security.path-traversal` no longer report request parameters of numeric, boolean or UUID types,
+  which cannot carry an attacker's text.
+- The rule catalogue no longer claims that `springai.llm-output-to-sink` covers HTML, which it does not check.
+
 ## [0.4.0] - 2026-10-22
 
 ### Added

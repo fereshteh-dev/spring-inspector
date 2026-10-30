@@ -3,7 +3,7 @@ package io.github.fereshtehdev.springinspector.rules.architecture;
 import io.github.fereshtehdev.springinspector.core.domain.Severity;
 import io.github.fereshtehdev.springinspector.core.domain.architecture.JavaUnit;
 import io.github.fereshtehdev.springinspector.core.domain.project.RuleOptions;
-import io.github.fereshtehdev.springinspector.rules.architecture.LayerViolationCheck.Violation;
+import io.github.fereshtehdev.springinspector.rules.architecture.DefaultLayerRules.Violation;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;

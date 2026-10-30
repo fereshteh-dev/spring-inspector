@@ -196,7 +196,7 @@ final class Advisor {
             for (Architecture.Use use : architecture.uses(unit)) {
                 Layer from = architecture.layer(unit);
                 Layer to = architecture.layer(use.to());
-                if (LayerViolationCheck.violation(from, to, unit, use.to()).isEmpty()) {
+                if (DefaultLayerRules.violation(from, to, unit, use.to()).isEmpty()) {
                     continue;
                 }
                 if (from == Layer.WEB && to == Layer.REPOSITORY) {

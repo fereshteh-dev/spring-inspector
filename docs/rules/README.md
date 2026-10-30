@@ -1,13 +1,13 @@
 # Rule catalogue
 
-Spring Inspector has 63 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
+Spring Inspector has 79 rules in six categories. Every finding explains what is wrong, why it matters and how to fix
 it, and many come with a patch. Rules know your Java, Spring Boot and Spring AI versions and only run where they apply.
 
 Turn a rule off, change its severity or set its options in `spring-inspector.yml` (see the
 [user guide](../user-guide.md#configuration)), or silence one finding with
 `// inspector:ignore <rule-id> reason="..."`.
 
-## Security (16)
+## Security (24)
 
 | Rule | Finds |
 |------|-------|
@@ -27,6 +27,14 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `security.ssrf` | Outgoing HTTP requests to URLs taken from request input |
 | `security.mass-assignment` | Request bodies bound directly to JPA entities |
 | `security.vulnerable-dependency` | Libraries with published vulnerabilities (CVE/GHSA), on the line that declares them, with the version that fixes them |
+| `security.command-injection` | Operating system commands built from request input |
+| `security.spel-injection` | Spring Expression Language text parsed from request input |
+| `security.open-redirect` | Redirects to a target taken from request input |
+| `security.cors-any-origin-with-credentials` | CORS that accepts the origin pattern `*` together with credentials |
+| `security.plaintext-password` | `NoOpPasswordEncoder`, `{noop}` values and `User.withDefaultPasswordEncoder()` outside tests |
+| `security.tls-verification-disabled` | Trust managers and host name verifiers that accept everything, outside tests |
+| `security.error-details-exposed` | Error responses that always show stack traces, exception names or internal messages |
+| `security.insecure-session-cookie` | Session cookies set to be readable by scripts or sent without TLS |
 
 ## Spring Boot (19)
 
@@ -52,7 +60,7 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `spring.jackson2-in-boot4` | Jackson 2 (`com.fasterxml.jackson`) imports in a Spring Boot 4 project |
 | `spring.value-sprawl` | Many `@Value` fields that belong in a `@ConfigurationProperties` record |
 
-## Spring AI (5)
+## Spring AI (9)
 
 | Rule | Finds |
 |------|-------|
@@ -60,7 +68,11 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `springai.shared-conversation-id` | One chat memory conversation shared by all users |
 | `springai.unconfirmed-destructive-tool` | Tools the model can call that write or delete without confirmation |
 | `springai.full-prompt-logging` | Full prompts and responses written to logs |
-| `springai.llm-output-to-sink` | Model output used directly in SQL, shell commands, file paths or HTML |
+| `springai.llm-output-to-sink` | Model output used directly in SQL, shell commands, file paths, class loading or script engines |
+| `springai.tool-guardrail-disabled` | Code that removes the limits on tool calls or lets the model call tools not attached to the request |
+| `springai.tool-resolution-fallback` | `spring.ai.tools.resolution.fallback.enabled=true` outside development profiles |
+| `springai.identity-from-model` | Tool parameters such as `userId` or `tenantId` that the model fills in, without `ToolContext` or an authorization check |
+| `springai.tool-without-description` | `@Tool` methods without a description |
 
 ## Clean code (12)
 
@@ -79,7 +91,7 @@ Turn a rule off, change its severity or set its options in `spring-inspector.yml
 | `cleancode.instanceof-chain` | `instanceof` chains that a pattern-matching `switch` replaces (Java 21+) |
 | `cleancode.thread-pool-for-io` | Fixed thread pools for blocking I/O where virtual threads fit (Java 21+) |
 
-## Architecture (5)
+## Architecture (7)
 
 The architecture rules map the whole project from its `package` and `import` lines (fast, without compiling), work
 out each class's layer from its Spring stereotype, its name or its package, and report on the import statement that
@@ -92,6 +104,8 @@ causes the problem, so a review shows the line to change.
 | `architecture.domain-depends-on-framework` | In a hexagonal (ports and adapters, clean, onion) project, domain classes that import Spring, JPA, Hibernate, Jackson or the Servlet API |
 | `architecture.feature-internals` | In an application organised by feature, a feature that uses another feature's inner classes instead of the classes in its own package (the boundary Spring Modulith checks) |
 | `architecture.new-feature-dependency` | A change that makes one feature depend on another for the first time, for the reviewer to confirm |
+| `architecture.hexagonal-direction` | In a hexagonal project, the core using an adapter, or one adapter using another |
+| `architecture.ai-in-web-layer` | Controllers that use `ChatClient`, `ChatModel`, `EmbeddingModel` or `VectorStore` directly |
 
 Teams can declare their own layer rules, which replace the built-in ones for the layers they name:
 
@@ -108,7 +122,7 @@ Run `spring-inspector architecture`, or open the **Architecture** tab in Intelli
 styles the project follows, a diagram of its parts, cycles, overloaded classes and suggestions for a cleaner
 structure. See the [user guide](../user-guide.md#architecture).
 
-## Migration (6)
+## Migration (8)
 
 Information to plan upgrades; these findings never block a commit by default. The rules about support dates and
 newest releases read the release calendar that `update` downloads (from endoflife.date and Maven Central), so they
@@ -122,3 +136,5 @@ stay correct as new versions come out, without a new version of Spring Inspector
 | `migration.javax-namespace` | `javax.*` imports that moved to `jakarta.*` |
 | `migration.web-security-configurer-adapter` | `WebSecurityConfigurerAdapter`, removed in Spring Security 6 |
 | `migration.spring-ai-1x-api` | Spring AI 1.x classes removed in Spring AI 2.0 |
+| `migration.spring-ai-2-removed-usage` | Methods and constants removed in Spring AI 2.0, whose classes still exist |
+| `migration.spring-ai-2-settings` | Settings removed or deprecated in Spring AI 2.0 |
