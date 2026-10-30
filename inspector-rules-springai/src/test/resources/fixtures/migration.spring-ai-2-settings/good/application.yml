@@ -1,0 +1,16 @@
+spring:
+  ai:
+    openai:
+      chat:
+        model: gpt-5
+    ollama:
+      chat:
+        think: true
+    chat:
+      memory:
+        repository:
+          redis:
+            host: localhost
+      client:
+        tool-calling:
+          enabled: true

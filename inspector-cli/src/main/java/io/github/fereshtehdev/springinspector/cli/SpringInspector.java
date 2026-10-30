@@ -15,8 +15,10 @@ import io.github.fereshtehdev.springinspector.git.HookInstaller;
 import io.github.fereshtehdev.springinspector.project.BuildFileProjectDetector;
 import io.github.fereshtehdev.springinspector.project.architecture.JavaImportScanner;
 import io.github.fereshtehdev.springinspector.project.dependencies.LocalRepository;
+import io.github.fereshtehdev.springinspector.rules.architecture.AiInWebLayerCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.DomainFrameworkCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.FeatureInternalsCheck;
+import io.github.fereshtehdev.springinspector.rules.architecture.HexagonalDirectionCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.LayerViolationCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.NewFeatureDependencyCheck;
 import io.github.fereshtehdev.springinspector.rules.architecture.PackageCycleCheck;
@@ -149,7 +151,9 @@ public final class SpringInspector implements Runnable {
                 new PackageCycleCheck(maps),
                 new DomainFrameworkCheck(maps),
                 new FeatureInternalsCheck(maps),
-                new NewFeatureDependencyCheck(maps));
+                new NewFeatureDependencyCheck(maps),
+                new HexagonalDirectionCheck(maps),
+                new AiInWebLayerCheck(maps));
         return checks.stream()
                 .map(check -> replacements.stream()
                         .filter(replacement -> replacement.id().equals(check.id()))

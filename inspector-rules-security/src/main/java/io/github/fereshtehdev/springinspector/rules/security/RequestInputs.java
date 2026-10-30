@@ -27,6 +27,26 @@ final class RequestInputs {
             "MatrixVariable");
     private static final Set<String> REQUEST_ACCESSORS = Set.of(
             "getParameter", "getHeader", "getQueryString", "getRequestURI", "getPathInfo", "getOriginalFilename");
+    /** Spring has already converted these, so they cannot carry text an attacker chose. */
+    private static final Set<String> UNINJECTABLE_TYPES = Set.of(
+            "boolean",
+            "byte",
+            "short",
+            "int",
+            "long",
+            "float",
+            "double",
+            "Boolean",
+            "Byte",
+            "Short",
+            "Integer",
+            "Long",
+            "Float",
+            "Double",
+            "BigDecimal",
+            "BigInteger",
+            "UUID");
+
     private static final int MAX_DEPTH = 6;
 
     private RequestInputs() {}
@@ -56,6 +76,7 @@ final class RequestInputs {
                         .filter(candidate -> candidate.getNameAsString().equals(name.getNameAsString()))
                         .findFirst());
         return parameter
+                .filter(found -> !UNINJECTABLE_TYPES.contains(found.getType().asString()))
                 .map(found -> BINDINGS.stream().anyMatch(binding -> file.hasAnnotation(found, WEB_BIND + binding)))
                 .orElse(false);
     }

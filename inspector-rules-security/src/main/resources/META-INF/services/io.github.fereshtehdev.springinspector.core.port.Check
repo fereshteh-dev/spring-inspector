@@ -13,3 +13,11 @@ io.github.fereshtehdev.springinspector.rules.security.PathTraversalCheck
 io.github.fereshtehdev.springinspector.rules.security.SsrfCheck
 io.github.fereshtehdev.springinspector.rules.security.InsecureRandomCheck
 io.github.fereshtehdev.springinspector.rules.security.MassAssignmentCheck
+io.github.fereshtehdev.springinspector.rules.security.CommandInjectionCheck
+io.github.fereshtehdev.springinspector.rules.security.SpelInjectionCheck
+io.github.fereshtehdev.springinspector.rules.security.OpenRedirectCheck
+io.github.fereshtehdev.springinspector.rules.security.CorsCredentialsCheck
+io.github.fereshtehdev.springinspector.rules.security.PlaintextPasswordCheck
+io.github.fereshtehdev.springinspector.rules.security.TlsVerificationDisabledCheck
+io.github.fereshtehdev.springinspector.rules.security.ErrorDetailsExposedCheck
+io.github.fereshtehdev.springinspector.rules.security.InsecureSessionCookieCheck

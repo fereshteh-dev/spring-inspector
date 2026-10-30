@@ -4,3 +4,9 @@ io.github.fereshtehdev.springinspector.rules.springai.DestructiveToolCheck
 io.github.fereshtehdev.springinspector.rules.springai.FullPromptLoggingCheck
 io.github.fereshtehdev.springinspector.rules.springai.LlmOutputToSinkCheck
 io.github.fereshtehdev.springinspector.rules.springai.SpringAi1xApiCheck
+io.github.fereshtehdev.springinspector.rules.springai.ToolGuardrailDisabledCheck
+io.github.fereshtehdev.springinspector.rules.springai.ToolResolutionFallbackCheck
+io.github.fereshtehdev.springinspector.rules.springai.IdentityFromModelCheck
+io.github.fereshtehdev.springinspector.rules.springai.ToolWithoutDescriptionCheck
+io.github.fereshtehdev.springinspector.rules.springai.SpringAi2RemovedUsageCheck
+io.github.fereshtehdev.springinspector.rules.springai.SpringAi2SettingsCheck

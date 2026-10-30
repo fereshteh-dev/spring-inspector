@@ -3,3 +3,5 @@ io.github.fereshtehdev.springinspector.rules.architecture.PackageCycleCheck
 io.github.fereshtehdev.springinspector.rules.architecture.DomainFrameworkCheck
 io.github.fereshtehdev.springinspector.rules.architecture.FeatureInternalsCheck
 io.github.fereshtehdev.springinspector.rules.architecture.NewFeatureDependencyCheck
+io.github.fereshtehdev.springinspector.rules.architecture.HexagonalDirectionCheck
+io.github.fereshtehdev.springinspector.rules.architecture.AiInWebLayerCheck

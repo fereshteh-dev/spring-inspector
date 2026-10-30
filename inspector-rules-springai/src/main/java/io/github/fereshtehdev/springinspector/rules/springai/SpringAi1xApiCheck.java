@@ -20,8 +20,8 @@ import java.util.Set;
 
 /**
  * Imports of Spring AI 1.x classes that no longer exist in 2.0, in a project on Spring AI 2.0 or later. The list
- * comes from comparing the 1.1.7 and 2.0.1 jars of spring-ai-client-chat, spring-ai-model and spring-ai-commons;
- * classes that only moved between jars, keeping their package, are not in it.
+ * comes from comparing the 1.1.7 and 2.0.2 jars of spring-ai-client-chat, spring-ai-model, spring-ai-commons and
+ * spring-ai-mcp, plus the upgrade notes; classes that only moved between jars, keeping their package, are not in it.
  */
 public final class SpringAi1xApiCheck extends JavaCheck {
 
@@ -33,7 +33,13 @@ public final class SpringAi1xApiCheck extends JavaCheck {
             "org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate",
             "org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate",
             "org.springframework.ai.tool.resolution.SpringBeanToolCallbackResolver",
-            "org.springframework.ai.util.LoggingMarkers");
+            "org.springframework.ai.util.LoggingMarkers",
+            "org.springframework.ai.mcp.customizer.McpAsyncClientCustomizer",
+            "org.springframework.ai.mcp.customizer.McpSyncClientCustomizer",
+            "org.springframework.ai.anthropic.api.AnthropicApi");
+
+    /** The MCP annotations moved to {@code org.springframework.ai.mcp.annotation} in 2.0. */
+    private static final String COMMUNITY_MCP = "org.springaicommunity.mcp.";
 
     private static final WhyItMatters WHY = new WhyItMatters(
             "The class was removed in Spring AI 2.0, so this file does not compile against the version the project"
@@ -61,7 +67,8 @@ public final class SpringAi1xApiCheck extends JavaCheck {
     protected List<Finding> inspect(JavaFile file) {
         return file.unit().getImports().stream()
                 .filter(declaration ->
-                        !declaration.isAsterisk() && REMOVED_IN_2_0.contains(declaration.getNameAsString()))
+                        (!declaration.isAsterisk() && REMOVED_IN_2_0.contains(declaration.getNameAsString()))
+                                || (declaration.getNameAsString() + ".").startsWith(COMMUNITY_MCP))
                 .map(declaration -> finding(
                         file,
                         declaration,
