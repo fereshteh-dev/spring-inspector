@@ -49,6 +49,10 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>inspector-document</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>inspector-advisories</artifactId>
         </dependency>
         <dependency>

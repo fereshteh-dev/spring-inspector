@@ -36,6 +36,19 @@ class JavaImportScannerTest {
     }
 
     @Test
+    void mapsPackagesNamedLikeBuildFolders() throws IOException {
+        write(
+                "src/main/java/com/acme/adapter/out/MailSender.java",
+                "package com.acme.adapter.out;\nclass MailSender {}\n");
+        write("backend/src/main/java/com/acme/build/Plan.java", "package com.acme.build;\nclass Plan {}\n");
+        write("out/production/com/acme/Compiled.java", "package com.acme;\nclass Compiled {}\n");
+
+        assertThat(JavaImportScanner.scan(project).units())
+                .extracting(JavaUnit::qualifiedName)
+                .containsExactlyInAnyOrder("com.acme.adapter.out.MailSender", "com.acme.build.Plan");
+    }
+
+    @Test
     void returnsNothingForAProjectWithoutJava() {
         assertThat(JavaImportScanner.scan(project).units()).isEmpty();
     }

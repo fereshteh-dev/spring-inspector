@@ -113,6 +113,7 @@ java -jar spring-inspector.jar check --base main             # review everything
 java -jar spring-inspector.jar check --files src/main/java/com/acme/Orders.java   # review whole files
 java -jar spring-inspector.jar check --details security      # explain every finding of one category
 java -jar spring-inspector.jar architecture                  # describe the architecture and suggest a cleaner one
+java -jar spring-inspector.jar document                      # write a PDF that documents the whole project
 java -jar spring-inspector.jar install-hook                  # review every commit automatically
 java -jar spring-inspector.jar update                        # download vulnerability advisories now
 ```
@@ -141,6 +142,24 @@ Modulith, CQRS, event-driven, multi-module, several applications in one reposito
 that the code keeps to that structure and suggests a cleaner one where it can: a package-by-feature layout built from
 your own classes, the cheapest link to cut in a dependency cycle, or which overloaded class to split. Run
 `spring-inspector architecture --format markdown` for a report with a diagram.
+
+## Project document
+
+`spring-inspector document` writes a document about the whole project as **PDF**, HTML or Markdown, from the source
+alone and without any network access:
+
+- what the project is: versions, building blocks and technologies;
+- a system context diagram: who calls the application, and the databases, brokers, AI models and services it uses;
+- the architecture styles, a diagram of the parts and their dependencies, cycles and overloaded classes;
+- how it works: for every controller, listener and scheduled job, the components it calls;
+- the API (every endpoint with its handler, request body, response and access rule) and the data model;
+- messages, events, scheduled jobs and integrations with other systems;
+- security: sign-in mechanisms and who may call what, in the order the rules are tried;
+- AI: models, vector stores, advisors, where models are used and the tools a model can call;
+- code quality and vulnerabilities: the score and what to fix first, with the fix.
+
+Addresses and credentials in your settings files are never copied into the document. See the
+[user guide](docs/user-guide.md#project-document).
 
 ## Always up to date
 
