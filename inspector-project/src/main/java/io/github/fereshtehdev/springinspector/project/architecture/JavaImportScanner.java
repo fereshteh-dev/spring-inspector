@@ -38,7 +38,8 @@ public final class JavaImportScanner {
                     Path name = directory.getFileName();
                     String folder = name == null ? "" : name.toString();
                     boolean testSources = folder.equals("test") && isSourceRoot(directory);
-                    return folder.startsWith(".") || SKIPPED.contains(folder) || testSources
+                    boolean buildOutput = SKIPPED.contains(folder) && !isPackage(projectRoot, directory);
+                    return folder.startsWith(".") || buildOutput || testSources
                             ? FileVisitResult.SKIP_SUBTREE
                             : FileVisitResult.CONTINUE;
                 }
@@ -73,6 +74,21 @@ public final class JavaImportScanner {
         return parent != null
                 && parent.getFileName() != null
                 && parent.getFileName().toString().equals("src");
+    }
+
+    /**
+     * Whether a folder is a Java package, below {@code src/main/java} or a similar source folder. Packages are
+     * never build output, whatever their name: hexagonal projects have {@code adapter.out}.
+     */
+    private static boolean isPackage(Path projectRoot, Path directory) {
+        Path relative = projectRoot.relativize(directory);
+        for (int at = 0; at + 2 < relative.getNameCount() - 1; at++) {
+            if (relative.getName(at).toString().equals("src")
+                    && relative.getName(at + 2).toString().equals("java")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Optional<JavaUnit> read(Path projectRoot, Path file) {

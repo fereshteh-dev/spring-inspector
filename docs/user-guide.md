@@ -104,6 +104,8 @@ category shows at most 20 findings by default; set `max-findings-per-category` h
 spring-inspector check [--staged | --base <ref> | --all | --files <file>...] [--details <category>]
                        [--format terminal|json|sarif]
                        [--project <dir>] [--config <file>] [--no-cache]
+spring-inspector architecture [--format terminal|markdown|json] [--project <dir>]
+spring-inspector document [--format pdf|html|markdown] [--output <file>] [--no-findings] [--project <dir>]
 spring-inspector init [--project <dir>]
 spring-inspector install-hook [--force] [--project <dir>]
 spring-inspector update [--max-age <age>] [--quiet]
@@ -195,6 +197,47 @@ rules:
 
 Layer names are `web`, `service`, `repository`, `domain`, `config` and `other`; a layer may always use itself and
 classes outside any layer.
+
+## Project document
+
+`document` describes the whole project in one file you can read, print or hand to a new team member. It is written
+from the source code, build files and settings: nothing is compiled or run, and nothing leaves your machine.
+
+```shell
+spring-inspector document                                   # spring-inspector-document.pdf in the project
+spring-inspector document --format html                     # one self-contained HTML file
+spring-inspector document --format markdown --output docs/DESIGN.md
+spring-inspector document --no-findings                     # without the code quality chapter; faster
+```
+
+| Chapter | What it tells you |
+|---------|-------------------|
+| Overview | Java, Spring Boot and Spring AI versions, build tool, building blocks and technologies |
+| System context | A diagram of the application with its callers, databases, brokers, AI models and other services |
+| Architecture | The styles the project follows, a diagram of its parts, cycles and classes that do too much |
+| How it works | For every controller, listener and scheduled job: the components it calls, and what those call |
+| API | Every HTTP, GraphQL and messaging endpoint with its handler, request body, response and access rule |
+| Data model | Entities, documents and tables with their ids and relations, and a diagram of the relations |
+| Messages, events and scheduled jobs | Kafka, RabbitMQ, JMS, SQS and Pulsar listeners, application events, `@Scheduled` jobs |
+| Integrations | HTTP clients, message producers, mail, object stores and other outgoing connections |
+| Security | Sign-in mechanisms, the access rules of each `SecurityFilterChain` in the order they are tried, method security |
+| AI | Models, vector stores and advisors, the classes that call a model, and every tool a model can call |
+| Code quality and vulnerabilities | The score, counts per category, and the most severe findings with their fix |
+| Suggestions | Concrete steps towards a cleaner structure |
+
+Chapters with nothing to say are left out. Good to know:
+
+- **Formats.** The PDF has page numbers and a bookmark for every chapter. The HTML file contains its styles and
+  diagrams, loads nothing from the network, follows your light or dark theme and prints cleanly. Markdown uses
+  Mermaid diagrams, which GitHub, GitLab and IntelliJ draw.
+- **Secrets stay out.** Of your settings files the document shows only the application name, port, profiles,
+  database product and model names. Addresses, user names, passwords and keys are never copied.
+- **Other alphabets.** The PDF uses the fonts every PDF reader has, which cover Latin text. Other characters appear
+  as `?`; use `--format html` for those.
+- **Run it on the project that has the build file.** In a repository with the application in a subfolder, point
+  `--project` at that subfolder so that versions are recognised.
+- The file is written into the project by default. Add `spring-inspector-document.*` to `.gitignore` if you do not
+  want to commit it.
 
 ## Vulnerable dependencies
 

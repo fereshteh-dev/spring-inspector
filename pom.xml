@@ -31,6 +31,7 @@
         <module>inspector-rules-springai</module>
         <module>inspector-rules-cleancode</module>
         <module>inspector-rules-architecture</module>
+        <module>inspector-document</module>
         <module>inspector-advisories</module>
         <module>inspector-llm</module>
         <module>inspector-git</module>
@@ -57,6 +58,7 @@
         <javaparser.version>3.28.2</javaparser.version>
         <picocli.version>4.7.7</picocli.version>
         <snakeyaml-engine.version>3.0.1</snakeyaml-engine.version>
+        <pdfbox.version>3.0.8</pdfbox.version>
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
 
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -112,6 +114,11 @@
                 <version>${snakeyaml-engine.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli</artifactId>
                 <version>${picocli.version}</version>
@@ -164,6 +171,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>inspector-rules-architecture</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>inspector-document</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

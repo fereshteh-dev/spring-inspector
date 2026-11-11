@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +99,14 @@ public final class SpringInspector implements Runnable {
                 .addSubcommand(new InitCommand(workingDirectory, out, err))
                 .addSubcommand(new ArchitectureCommand(
                         workingDirectory, new BuildFileProjectDetector(), JavaImportScanner::scan, style, out))
+                .addSubcommand(new DocumentCommand(
+                        inspector,
+                        new BuildFileProjectDetector(),
+                        JavaImportScanner::scan,
+                        workingDirectory,
+                        version,
+                        Clock.system(ZoneId.systemDefault()),
+                        out))
                 .addSubcommand(new UpdateCommand(
                         maxAge -> {
                             AdvisoryUpdater updater = new AdvisoryUpdater(advisories, environment);

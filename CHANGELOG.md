@@ -6,6 +6,11 @@ All notable changes are listed here. The project follows [semantic versioning](h
 
 ### Added
 
+- `spring-inspector document` writes a document about the whole project as PDF, HTML or Markdown: an overview, a
+  system context diagram, the architecture with a diagram of its parts, how requests flow through the components,
+  the API, the data model, messages and scheduled jobs, integrations, security rules, AI models and tools, and the
+  findings to fix first. It works offline and never copies addresses or credentials from settings files.
+
 - Eight security rules (79 rules in all): `security.command-injection`, `security.spel-injection`,
   `security.open-redirect`, `security.cors-any-origin-with-credentials`, `security.plaintext-password`,
   `security.tls-verification-disabled`, `security.error-details-exposed` and `security.insecure-session-cookie`.
@@ -21,6 +26,9 @@ All notable changes are listed here. The project follows [semantic versioning](h
 - `security.ssrf` mentions Spring Boot 4.1's `InetAddressFilter` in its advice.
 
 ### Fixed
+
+- The architecture rules and report skipped Java packages named `out`, `build`, `bin`, `target` or `generated`, so
+  hexagonal projects with `adapter.out` packages were only partly analysed.
 
 - Checks no longer fail at random with `ConcurrentModificationException` or `NoSuchElementException` on real projects.
   Each run lost the findings of the checks that failed, which were reported only as problems in the output.

@@ -23,7 +23,7 @@
    • Spring Boot 3.3–3.5 and 4.0–4.x; Spring AI 1.0–1.1 and 2.0.x. Detect versions from Maven/Gradle files (parse the BOM/parent; never execute the build).
    • A rule declares the version ranges it applies to; the engine skips rules that don't apply. Migration hints (e.g. Boot 3.5 is out of OSS support; Jackson 2 → 3) are a separate INFO-level category.
 3. Delivery modes (build order)
-1. CLI — spring-inspector check [--staged | --base main | --all] [--format terminal|json|sarif]; also init, update and install-hook.
+1. CLI — spring-inspector check [--staged | --base main | --all] [--format terminal|json|sarif]; also init, update, install-hook, architecture and document (a PDF, HTML or Markdown document of the whole project).
 2. Git pre-commit hook — spring-inspector install-hook; checks staged changes; blocks the commit only on BLOCKER findings (configurable); --no-verify still works.
 3. IntelliJ plugin — the main way developers use it. Installs from a zip published on GitHub Releases into IntelliJ IDEA and the other JetBrains IDEs (2025.1+). Tool window with the same report card, findings tree, details with the three parts, open-in-editor; then editor highlighting, quick-fixes that apply the patch, and a check before commit. It runs the bundled CLI in its own process and reads its JSON report (ADR-0004).
    Dropped: the local web report (spring-inspector ui). The IDE plugin replaces it.
@@ -34,6 +34,7 @@
    • inspector-advisories — offline vulnerability/advisory database and sync.
    • inspector-llm — optional local AI explainer via Spring AI 2.0 + Ollama.
    • inspector-git — JGit: staged/base diffs, hook installer.
+   • inspector-document — reads the system design from the source and writes the project document as PDF (Apache PDFBox), HTML or Markdown.
    • inspector-cli — picocli entry point, terminal, JSON and SARIF renderers; the executable jar.
    • inspector-intellij — the IntelliJ plugin; a separate Gradle build that bundles the CLI jar (ADR-0004).
    • inspector-eval — benchmark harness.

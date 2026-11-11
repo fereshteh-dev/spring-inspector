@@ -135,6 +135,7 @@ flowchart BT
 | `inspector-git` | Collects changes with JGit; inspects plain folders; installs the pre-commit hook |
 | `inspector-advisories` | Downloads and stores OSV advisories and the release calendar; the vulnerable-dependency rule |
 | `inspector-rules-*` | The 79 rules, one class each, registered through `META-INF/services`; `inspector-rules-architecture` also recognises architecture styles and writes the architecture report |
+| `inspector-document` | Reads the system design (endpoints, data model, security, AI use, flows) and writes the project document as PDF, HTML or Markdown |
 | `inspector-rule-testkit` | Runs a rule on code snippets in tests, including applying its patch |
 | `inspector-cli` | The `spring-inspector.jar` entry point and its output formats |
 | `inspector-intellij` | The IntelliJ plugin (a separate Gradle build) |
